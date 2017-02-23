@@ -1,4 +1,4 @@
-#         'r team Project Proposal
+#.         'r team Project Proposal
 
 The goal of this project is to create a 3D rendering engine to let a user walk around a procedurally generated landscape to explore different rendering and generation techniques.
 
