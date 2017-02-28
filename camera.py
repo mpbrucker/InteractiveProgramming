@@ -11,7 +11,7 @@ class Camera:
 
     def __init__(self, init_pos=(0, 0, 0), init_angle=(0, 0, 0)):
         self.pos = init_pos
-        self.frame = 0
+        self.angle = init_angle
 
     def __str__(self):
         return "Camera object at: {}, {}, {}. Angles: {}, {}, {}".format(self.pos[0], self.pos[1], self.pos[2], self.angle[0], self.angle[1], self.angle[2])
@@ -21,6 +21,8 @@ class Renderer:
     """
     The renderer class. Takes the camera and world and outputs images.
     """
+
+    frame = 0
 
     def draw_scene(self, camera, surface):
         """
