@@ -1,11 +1,10 @@
-from time import sleep
 import numpy as np
 import pygame
 
 pygame.init()
 windowSurface = pygame.display.set_mode((400, 400), 0, 32)
 
-
+clock = pygame.time.Clock()
 frame = 0
 
 while True:
@@ -18,4 +17,4 @@ while True:
 
     pygame.display.flip()
 
-    sleep(.1)
+    clock.tick(30)
