@@ -4,7 +4,7 @@ from math import sin, cos, pi
 from stl import mesh
 from mpl_toolkits.mplot3d import Axes3D
 # Uncomment this line and change it if the default display backend doesn't work with matplotlib:
-matplotlib.use('GTK3Cairo')
+# matplotlib.use('GTK3Cairo')
 import matplotlib.pyplot as plt
 
 
@@ -92,6 +92,6 @@ class Item():
         ax.set_zlabel('Z')
         plt.show()
 
-
-item = Item('Cylinder.stl', (5, 6, 7), (90, 0, 0))
-item.display_model()
+if __name__ == "__main__":
+    item = Item('Cylinder.stl', (5, 1, 7), (90, 30, 0))
+    item.display_model()
