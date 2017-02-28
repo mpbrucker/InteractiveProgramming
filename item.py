@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib
 from math import sin, cos, pi
-from numpy import deg2rad as rad
+from stl import mesh
 from mpl_toolkits.mplot3d import Axes3D
 # Uncomment this line and change it if the default display backend doesn't work with matplotlib:
 matplotlib.use('GTK3Cairo')
@@ -10,27 +10,37 @@ import matplotlib.pyplot as plt
 
 class Item():
 
-    def __init__(self, world_coords, orientation):
+    def __init__(self, file_name, world_coords, orientation, color=(255,0,0)):
         """
         Initializes a new item at the coordinates (x,y,z).
         """
-        # These points will probably be generated differently at some time in the future
-        self.points = np.array([[0, 0, 0], [0, 0, 1], [1, 0, 1], [1, 0, 0], [0, 0, 0]])
+        # Imports an STL file and extracts the points from it
+        self.vecs = self.model_to_points(file_name)
 
         # Get the rotation matrix using the rotations about the x, y, and z axes
-
-        self.world_points = self.get_transformed_points(self.points, world_coords, orientation)
+        self.world_points = self.get_transformed_points(self.vecs, world_coords, orientation)
+        self.color = color  # Set the color of the object
+        self.location = world_coords  # The canonical location of the object
 
     def __str__(self):
-        return "\n".join(["Vertex: ({}, {}, {})".format(point[0], point[1], point[2]) for point in self.points])
+        return "Position in world: ({}, {}, {})".format(self.location[0], self.location[1], self.location[2])
+
+    def model_to_points(self, file_name):
+        """
+        Returns a list of triangles, each of which is composed of 3D points, based on a file_name
+        """
+        obj_mesh = mesh.Mesh.from_file(file_name)
+        return obj_mesh.vectors
 
     def get_transformed_points(self, points, coords, orientation):
         """
-
+        Returns the points of the object as translated by coords and rotated by orientation
         """
-        translation = self.get_translation_matrix(coords)
-        transform = translation.dot(self.get_rotation_matrix(orientation))
-        return np.array([transform.dot(np.append(point, [1]))[0:3] for point in points])
+        # Combines the translation and rotation matrices
+        transform = self.get_translation_matrix(coords).dot(self.get_rotation_matrix(orientation))
+        new_points = np.zeros(points.shape)  # The matrix of transformed points
+        new_points = [np.array([transform.dot(np.append(point, [1]))[0:3] for point in triangle]) for triangle in points]
+        return new_points
 
     def get_translation_matrix(self, world_coords):
         """
@@ -55,19 +65,25 @@ class Item():
                         [0, 0, 0, 1]])
 
     def display_model(self):
+        """
+        Displays the object using matplotlib. Useful for debugging.
+        """
         fig = plt.figure()
-        points = self.points
+        vectors = self.vecs
         ax = fig.add_subplot(111, projection='3d')
-        x = points[:,0]
-        y = points[:,1]
-        z = points[:,2]
+        for points in vectors:
+            x = points[:, 0]
+            y = points[:, 1]
+            z = points[:, 2]
+            ax.plot(x, y, z)
 
-        x2 = self.world_points[:,0]
-        y2 = self.world_points[:,1]
-        z2 = self.world_points[:,2]
+        world_vectors = self.world_points
+        for points in world_vectors:
+            x2 = points[:, 0]
+            y2 = points[:, 1]
+            z2 = points[:, 2]
+            ax.plot(x2, y2, z2)
 
-        ax.plot(x, y, z)
-        ax.plot(x2, y2, z2)
         ax.set_xlim([0, 10])
         ax.set_ylim([0, 10])
         ax.set_zlim([0, 10])
@@ -76,9 +92,6 @@ class Item():
         ax.set_zlabel('Z')
         plt.show()
 
-    def model_to_points():
-        pass
 
-
-item = Item((5, 6, 7), (90, 0, 0))
+item = Item('Cylinder.stl', (5, 6, 7), (90, 0, 0))
 item.display_model()
