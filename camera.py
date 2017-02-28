@@ -24,24 +24,34 @@ class Renderer:
 
     frame = 0
 
-    def draw_scene(self, camera, surface):
+    def draw_scene(self, world, camera, canvas, fov=70):
         """
         Draws the frame and updates the display
         """
 
         global background
 
+        global item
+
         self.frame += 1
 
         # Reset to black
-        surface.fill(background)
+        canvas.fill(background)
 
         # Temp: draw rectangle
         # TODO: add transformMatrix = worldMatrix * viewMatrix * projectionMatrix and then do it
 
-        for i in range(50):
-            for j in range(50):
-                surface.set_at((i + self.frame, j + self.frame), (150, 0, 0))
+        view_matrix = self.view_matrix(camera)
+        project_matrix = self.persp_proj_matrix(fov, canvas.width/canvas.length, 0.01, 1.0)
+
+        transform_matrix = view_matrix * project_matrix
+
+        for i in item.world_points:
+
+
+        # for i in range(50):
+        #     for j in range(50):
+        #         canvas.set_at((i + self.frame, j + self.frame), (150, 0, 0))
 
         pygame.display.flip()
 
@@ -89,21 +99,42 @@ class Renderer:
                          [xaxis[2],                     yaxis[2],                   zaxis[2],                0],
                          [-np.dot(xaxis, camera.pos),   -np.dot(yaxis, camera.pos), -dot(zaxis, camera.pos), 1]])
 
+class World:
+    """
+    Holds all the items in the world
+    """
 
+    items = 0
+
+    def add_item():
+        """
+        Adds item to the world.
+        """
+
+    def move_item():
+        """
+        Changes coordinates of an existing item.
+        """
+
+    def gen_world():
+        """
+        Generates a world.
+        """
 
 if __name__ == "__main__":
     window_size = (400, 400)
     background = (255, 255, 255)
 
     pygame.init()
-    surface = pygame.display.set_mode(window_size, 0, 32)
+    canvas = pygame.display.set_mode(window_size, 0, 32)
     clock = pygame.time.Clock()
 
     camera = Camera()
     renderer = Renderer()
+    world = World()
 
     item = Item('Cylinder.stl', (5, 1, 7), (90, 30, 0))
 
     while True:
-        renderer.draw_scene(camera, surface)
+        renderer.draw_scene(world, camera, canvas)
         clock.tick(30)
