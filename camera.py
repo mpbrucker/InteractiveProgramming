@@ -40,9 +40,9 @@ class Renderer:
         canvas.fill(background)
 
         view_matrix = self.view_matrix(camera)
-        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), 1, 100.0)
+        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), .1, 1)
 
-        transform_matrix = view_matrix * project_matrix
+        transform_matrix = project_matrix * view_matrix
 
         print("View:")
         print(view_matrix)
@@ -53,11 +53,15 @@ class Renderer:
 
         # Debug: draw center point
         self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2), (0, 200, 0), 8)
+        self.draw_point(canvas, self.project_point((0,0,100), view_matrix, project_matrix, canvas), (125, 0, 0), 4)
+
         for tri in item.world_points[:1]:
             for point in tri:
                 print("Pt:", point)
-                print("Tf:", self.project_point(point, transform_matrix, canvas))
-                self.draw_point(canvas, self.project_point(point, transform_matrix, canvas), (125, 0, 0), 6)
+                point_view = np.dot(np.append(point, [1]), view_matrix)
+                print("Pt V:", point_view)
+                print("Tf:", self.project_point(point, view_matrix, project_matrix, canvas))
+                self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6)
 
         # for i in range(50):
         #     for j in range(50):
@@ -65,8 +69,10 @@ class Renderer:
 
         pygame.display.flip()
 
-    def project_point(self, point, transform_matrix, canvar):
-        xy = np.dot(np.append(point, [1]), transform_matrix)
+    def project_point(self, point, view_matrix, project_matrix, canvas):
+        xy = np.dot(np.append(point, [1]), view_matrix)
+        xy = np.dot(xy, project_matrix)
+
         print(xy[0])
         xy[0] = xy[0] + canvas.get_width() / 2
         xy[1] = xy[1] + canvas.get_height() / 2
@@ -117,9 +123,10 @@ class Renderer:
         # Remaps z to [0,1]
         c = zfar / (zfar - znear)
         # Remaps z to [0,1]
-        d = 1
-        e = -(znear * zfar) / (zfar - znear)
+        d = -(znear * zfar) / (zfar - znear)
+        e = 1
 
+        # Might need transform
         return np.array([[a, 0, 0, 0],
                          [0, b, 0, 0],
                          [0, 0, c, d],
@@ -191,7 +198,7 @@ if __name__ == "__main__":
     canvas = pygame.display.set_mode(window_size, 0, 32)
     clock = pygame.time.Clock()
 
-    camera = Camera(init_pos=[0,0,0], init_angle=[0, 0, 0], init_fov=60)
+    camera = Camera(init_pos=[0,0,0], init_angle=[0, 0, 0], init_fov=90)
     renderer = Renderer()
     world = World()
 
@@ -199,9 +206,11 @@ if __name__ == "__main__":
 
     while True:
         renderer.draw_scene(world, camera, canvas)
-        camera.pos[1] = camera.pos[1] + 5
-        camera.pos[2] = camera.pos[2] + 5
+        # camera.pos[0] = camera.pos[0] + 5
+        # camera.pos[1] = camera.pos[1] + 5
+        # camera.pos[2] = camera.pos[2] + 5
         # camera.fov = camera.fov + 1
-        # camera.angle[0] = camera.angle[0] + .1
+        camera.angle[0] = camera.angle[0] + .4
+
         print(camera)
         clock.tick(2)
