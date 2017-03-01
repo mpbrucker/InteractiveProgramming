@@ -4,7 +4,6 @@ import pygame
 from item import *
 
 
-
 class Camera:
     pos = [0, 0, 0]
     angle = [0, 0, 0]
@@ -17,6 +16,15 @@ class Camera:
 
     def __str__(self):
         return "Camera object at: {}, {}, {}. Angles: {}, {}, {}. Fov: {}".format(self.pos[0], self.pos[1], self.pos[2], self.angle[0], self.angle[1], self.angle[2], self.fov)
+
+    def move(self, x, y, speed=0.001):
+        self.pos[0] += x*speed
+        self.pos[1] += y*speed
+
+    def rotate(self, yaw, pitch, roll, sensitivity=.001):
+        self.angle[0] += yaw*sensitivity
+        self.angle[1] += pitch*sensitivity
+        self.angle[2] += roll*sensitivity
 
 
 class Renderer:
@@ -31,8 +39,8 @@ class Renderer:
         Draws the frame and updates the display
         """
 
-        global background
-        global item
+        background = (255, 255, 255)
+        item = Item('Cylinder.stl', (50, 100, 1000), (35, 25, 0), 100)
 
         self.frame += 1
 
@@ -207,7 +215,6 @@ class World:
         """
         Generates a world.
         """
-
     def all_objects():
         """
         Returns all objects in the world

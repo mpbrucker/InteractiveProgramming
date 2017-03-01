@@ -98,6 +98,6 @@ class Item():
         ax.set_zlabel('Z')
         plt.show()
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # item = Item('Cylinder.stl', (5, 1, 7), (90, 30, 0), 4)
     # item.display_model()
