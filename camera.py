@@ -80,17 +80,11 @@ class Renderer:
 
         pygame.display.flip()
 
-<<<<<<< HEAD
-    def project_point(self, point, transform_matrix, canvas):
-        xy = np.dot(np.append(point, [1]), transform_matrix)
-=======
     def project_point(self, point, view_matrix, project_matrix, canvas):
         xy = np.dot(np.append(point, [1]), view_matrix)
         xy = np.dot(xy, project_matrix)
 
         xy = xy/xy[3]
-
->>>>>>> 3d115fdeecfb938f77446dc870180c7121d4f2a6
         xy[0] = xy[0] + canvas.get_width() / 2
         xy[1] = xy[1] + canvas.get_height() / 2
         # print(xy)
@@ -218,8 +212,10 @@ class World:
         """
         Generates a world.
         """
-
-<<<<<<< HEAD
+    def all_objects():
+        """
+        Returns all objects in the world
+        """
 # if __name__ == "__main__":
 #     window_size = (1000, 1000)
     # background = (255, 255, 255)
@@ -242,35 +238,3 @@ class World:
 #         # camera.angle[0] = camera.angle[0] + .1
 #         print(camera)
 #         clock.tick(5)
-=======
-    def all_objects():
-        """
-        Returns all objects in the world
-        """
-
-if __name__ == "__main__":
-    window_size = (1000, 1000)
-    background = (255, 255, 255)
-
-    pygame.init()
-    canvas = pygame.display.set_mode(window_size, 0, 32)
-    clock = pygame.time.Clock()
-
-    camera = Camera(init_pos=[0,0,1], init_angle=[0, 0, 0], init_fov=90)
-    renderer = Renderer()
-    world = World()
-
-    item = Item('Cylinder.stl', (0, 0, 0.1), (0, 0, 0), 1)
-
-    while True:
-        renderer.draw_scene(world, camera, canvas)
-        # camera.pos[0] = camera.pos[0] + 5
-        # camera.pos[1] = camera.pos[1] + 5
-        camera.pos[2] = camera.pos[2] + .005
-        # camera.fov = camera.fov + 1
-        # camera.angle[0] = camera.angle[0] + .4
-
-        # print(camera)
-        # print()
-        clock.tick(30)
->>>>>>> 3d115fdeecfb938f77446dc870180c7121d4f2a6
