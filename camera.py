@@ -59,11 +59,13 @@ class Renderer:
         for tri in item.world_points:
             for point in tri:
                 point_view = np.dot(np.append(point, [1]), view_matrix)
-                # print("Pt:", point)
-                # print("Pt V:", point_view)
-                # print("Pt Tf:", self.project_point(point, view_matrix, project_matrix, canvas))
 
                 if point_view[2] > 0.01:
+                    print("Pt:", point)
+                    print("Pt V:", point_view)
+                    print("Pt Tf:", self.project_point(point, view_matrix, project_matrix, canvas))
+                    input()
+
                     self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6)
 
         # for i in range(50):
@@ -129,14 +131,14 @@ class Renderer:
         # Remaps z to [0,1]
         c = zfar / (zfar - znear)
         # Remaps z to [0,1]
-        e = -(znear * zfar) / (zfar - znear)
-        d = 1
+        d = -(znear * zfar) / (zfar - znear)
+        e = 1
 
         # Might need transform
         return np.array([[a, 0, 0, 0],
                          [0, b, 0, 0],
                          [0, 0, c, d],
-                         [0, 0, e, 0]])
+                         [0, 0, e, 0]]).T
 
         # deg_to_rad = pi/180
         # # Scale of horiz
@@ -219,13 +221,14 @@ if __name__ == "__main__":
     canvas = pygame.display.set_mode(window_size, 0, 32)
     clock = pygame.time.Clock()
 
-    camera = Camera(init_pos=[0,0,1], init_angle=[0, 0, 0], init_fov=90)
+    camera = Camera(init_pos=[0,0,0], init_angle=[0, 0, 0], init_fov=90)
     renderer = Renderer()
     world = World()
 
-    item = Item('Cylinder.stl', (0, 0, 0.1), (0, 0, 0), 1)
+    item = Item('cube.stl', (0, 0, 0), (0, 0, 0), 1)
 
     while True:
+        print(camera)
         renderer.draw_scene(world, camera, canvas)
         # camera.pos[0] = camera.pos[0] + 5
         # camera.pos[1] = camera.pos[1] + 5
@@ -233,6 +236,6 @@ if __name__ == "__main__":
         # camera.fov = camera.fov + 1
         # camera.angle[0] = camera.angle[0] + .4
 
-        # print(camera)
+
         # print()
         clock.tick(30)
