@@ -59,7 +59,7 @@ class Renderer:
 
     def draw_point(self, canvas, point, color):
         #print(point)
-        canvas.set_at((int(point[0]), int(point[1])), color)
+        canvas.set_at((int(point[0]), canvas.get_height() - int(point[1])), color)
 
     def persp_proj_matrix(self, fov, aspect, znear, zfar):
         """
@@ -128,7 +128,7 @@ class World:
         """
 
 if __name__ == "__main__":
-    window_size = (400, 400)
+    window_size = (1000, 1000)
     background = (255, 255, 255)
 
     pygame.init()
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     renderer = Renderer()
     world = World()
 
-    item = Item('Cylinder.stl', (-1, 1, 1), (90, 30, 0))
+    item = Item('Cylinder.stl', (200, 200, .1), (0, 30, 0))
 
     while True:
         renderer.draw_scene(world, camera, canvas)
