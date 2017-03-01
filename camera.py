@@ -4,7 +4,6 @@ import pygame
 from item import *
 
 
-
 class Camera:
     pos = [0, 0, 0]
     angle = [0, 0, 0]
@@ -17,6 +16,15 @@ class Camera:
 
     def __str__(self):
         return "Camera object at: {}, {}, {}. Angles: {}, {}, {}. Fov: {}".format(self.pos[0], self.pos[1], self.pos[2], self.angle[0], self.angle[1], self.angle[2], self.fov)
+
+    def move(self, x, y, speed=0.001):
+        self.pos[0] += x*speed
+        self.pos[1] += y*speed
+
+    def rotate(self, yaw, pitch, roll, sensitivity=.001):
+        self.angle[0] += yaw*sensitivity
+        self.angle[1] += pitch*sensitivity
+        self.angle[2] += roll*sensitivity
 
 
 class Renderer:
@@ -31,8 +39,8 @@ class Renderer:
         Draws the frame and updates the display
         """
 
-        global background
-        global item
+        background = (255, 255, 255)
+        item = Item('Cylinder.stl', (50, 100, 1000), (35, 25, 0), 100)
 
         self.frame += 1
 
@@ -44,12 +52,12 @@ class Renderer:
 
         transform_matrix = view_matrix * project_matrix
 
-        print("View:")
-        print(view_matrix)
-        print("Project:")
-        print(project_matrix)
-        print("Transform:")
-        print(transform_matrix)
+        # print("View:")
+        # print(view_matrix)
+        # print("Project:")
+        # print(project_matrix)
+        # print("Transform:")
+        # print(transform_matrix)
 
         # Debug: draw center point
         self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2), (0, 200, 0), 8)
@@ -64,7 +72,7 @@ class Renderer:
 
         pygame.display.flip()
 
-    def project_point(self, point, transform_matrix, canvar):
+    def project_point(self, point, transform_matrix, canvas):
         xy = np.dot(np.append(point, [1]), transform_matrix)
         xy[0] = xy[0] + canvas.get_width() / 2
         xy[1] = xy[1] + canvas.get_height() / 2
@@ -129,9 +137,9 @@ class Renderer:
         yaxis = (sinYaw * sinPitch, cosPitch, cosYaw * sinPitch)
         zaxis = (sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw)
 
-        print(xaxis)
-        print(yaxis)
-        print(zaxis)
+        # print(xaxis)
+        # print(yaxis)
+        # print(zaxis)
 
         # # This is a RH matrix, z axis (camera pos) is negative
         # arr =  np.array([[xaxis[0],                     yaxis[0],                   zaxis[0],                0],
@@ -169,25 +177,25 @@ class World:
         Generates a world.
         """
 
-if __name__ == "__main__":
-    window_size = (1000, 1000)
-    background = (255, 255, 255)
-
-    pygame.init()
-    canvas = pygame.display.set_mode(window_size, 0, 32)
-    clock = pygame.time.Clock()
-
-    camera = Camera(init_pos=[0,0,0], init_angle=[0, 0, 0], init_fov=60)
-    renderer = Renderer()
-    world = World()
-
-    item = Item('Cylinder.stl', (50, 100, 1000), (35, 25, 0), 100)
-
-    while True:
-        renderer.draw_scene(world, camera, canvas)
-        # camera.pos[1] = camera.pos[1] + 5
-        # camera.pos[2] = camera.pos[2] + 5
-        camera.fov = camera.fov + 1
-        # camera.angle[0] = camera.angle[0] + .1
-        print(camera)
-        clock.tick(5)
+# if __name__ == "__main__":
+#     window_size = (1000, 1000)
+    # background = (255, 255, 255)
+#
+#     pygame.init()
+#     canvas = pygame.display.set_mode(window_size, 0, 32)
+#     clock = pygame.time.Clock()
+#
+#     camera = Camera(init_pos=[0,0,0], init_angle=[0, 0, 0], init_fov=60)
+#     renderer = Renderer()
+#     world = World()
+#
+    # item = Item('Cylinder.stl', (50, 100, 1000), (35, 25, 0), 100)
+#
+#     while True:
+#         renderer.draw_scene(world, camera, canvas)
+#         # camera.pos[1] = camera.pos[1] + 5
+#         # camera.pos[2] = camera.pos[2] + 5
+#         camera.fov = camera.fov + 1
+#         # camera.angle[0] = camera.angle[0] + .1
+#         print(camera)
+#         clock.tick(5)
