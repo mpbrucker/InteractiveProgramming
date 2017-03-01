@@ -40,28 +40,30 @@ class Renderer:
         canvas.fill(background)
 
         view_matrix = self.view_matrix(camera)
-        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), .1, 1)
+        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), .001, 10)
 
-        transform_matrix = project_matrix * view_matrix
+        # transform_matrix = project_matrix * view_matrix
 
-        print("View:")
-        print(view_matrix)
-        print("Project:")
-        print(project_matrix)
-        print("Transform:")
-        print(transform_matrix)
+        # print("View:")
+        # print(view_matrix)
+        # print("Project:")
+        # print(project_matrix)
+        # print("Transform:")
+        # print(transform_matrix)
 
         # Debug: draw center point
-        self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2), (0, 200, 0), 8)
+        self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2, 1), (0, 200, 0), 8)
         self.draw_point(canvas, self.project_point((0,0,100), view_matrix, project_matrix, canvas), (125, 0, 0), 4)
 
-        for tri in item.world_points[:1]:
+        for tri in item.world_points:
             for point in tri:
-                print("Pt:", point)
                 point_view = np.dot(np.append(point, [1]), view_matrix)
-                print("Pt V:", point_view)
-                print("Tf:", self.project_point(point, view_matrix, project_matrix, canvas))
-                self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6)
+                # print("Pt:", point)
+                # print("Pt V:", point_view)
+                # print("Pt Tf:", self.project_point(point, view_matrix, project_matrix, canvas))
+
+                if point_view[2] > 0.01:
+                    self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6)
 
         # for i in range(50):
         #     for j in range(50):
@@ -73,7 +75,8 @@ class Renderer:
         xy = np.dot(np.append(point, [1]), view_matrix)
         xy = np.dot(xy, project_matrix)
 
-        print(xy[0])
+        xy = xy/xy[3]
+
         xy[0] = xy[0] + canvas.get_width() / 2
         xy[1] = xy[1] + canvas.get_height() / 2
         # print(xy)
@@ -82,37 +85,39 @@ class Renderer:
 
     def draw_point(self, canvas, point, color, size=1):
         # print(point)
-        for i in range(size):
-            for j in range(size):
-                canvas.set_at((int(point[0] + i), canvas.get_height() - int(point[1]) + j), color)
+        # Basic clipping
+        if point[2] > 0.01:
+            for i in range(size):
+                for j in range(size):
+                    canvas.set_at((int(point[0] + i), canvas.get_height() - int(point[1]) + j), color)
 
     def persp_proj_matrix(self, fov, aspect, znear, zfar):
         """
         Return a projection matrix for the given parameters
         """
 
-        """ # This is probably 'just wrong'
-        # calculates the 'length' of half of the screen
-        xymax = znear * tan(fov * pi / 360) # /360 because fov/2 * pi/180
-        ymin = -xymax
-        xmin = -xymax
+        # # This is probably 'just wrong'
+        # # calculates the 'length' of half of the screen
+        # xymax = znear * tan(fov * pi / 360) # /360 because fov/2 * pi/180
+        # ymin = -xymax
+        # xmin = -xymax
+        #
+        # # adds the two together
+        # width = xymax - xmin
+        # height = xymax - ymin
+        #
+        # depth = zfar - znear
+        # q = -(zfar + znear) / depth
+        # qn = -2 * (zfar * znear) / depth
+        #
+        # w = (2 * znear / width) / aspect
+        # h = 2 * znear / height
+        #
+        # return np.array([[w, 0, 0, 0],
+        #                  [0, h, 0, 0],
+        #                  [0, 0, q, -1],
+        #                  [0, 0, qn, 0]])
 
-        # adds the two together
-        width = xymax - xmin
-        height = xymax - ymin
-
-        depth = zfar - znear
-        q = -(zfar + znear) / depth
-        qn = -2 * (zfar * znear) / depth
-
-        w = (2 * znear / width) / aspect
-        h = 2 * znear / height
-
-        return np.array([[w, 0, 0, 0],
-                         [0, h, 0, 0],
-                         [0, 0, q, -1],
-                         [0, 0, qn, 0]])
-        """
         pi180 = pi/180
 
         # Scale of x axis
@@ -123,14 +128,29 @@ class Renderer:
         # Remaps z to [0,1]
         c = zfar / (zfar - znear)
         # Remaps z to [0,1]
-        d = -(znear * zfar) / (zfar - znear)
-        e = 1
+        e = -(znear * zfar) / (zfar - znear)
+        d = 1
 
         # Might need transform
         return np.array([[a, 0, 0, 0],
                          [0, b, 0, 0],
                          [0, 0, c, d],
                          [0, 0, e, 0]])
+
+        # deg_to_rad = pi/180
+        # # Scale of horiz
+        # a = znear * tan(fov * .5 * deg_to_rad)
+        # # Scale of vertical
+        # b = (znear * tan(fov * .5 * deg_to_rad)) / aspect
+        #
+        # c = 0
+        # d = 1
+        # e = 1
+        #
+        # return np.array([[a, 0, 0, 0],
+        #                  [0, b, 0, 0],
+        #                  [0, 0, c, d],
+        #                  [0, 0, 0, 0]])
 
 
     def view_matrix(self, camera):
@@ -145,9 +165,9 @@ class Renderer:
         yaxis = (sinYaw * sinPitch, cosPitch, cosYaw * sinPitch)
         zaxis = (sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw)
 
-        print(xaxis)
-        print(yaxis)
-        print(zaxis)
+        # print(xaxis)
+        # print(yaxis)
+        # print(zaxis)
 
         # # This is a RH matrix, z axis (camera pos) is negative
         arr =  np.array([[xaxis[0],                     yaxis[0],                   zaxis[0],                0],
@@ -202,15 +222,16 @@ if __name__ == "__main__":
     renderer = Renderer()
     world = World()
 
-    item = Item('Cylinder.stl', (50, 50, 100), (35, 25, 0), 100)
+    item = Item('Cylinder.stl', (0, 0, 0), (35, 25, 0), 100)
 
     while True:
         renderer.draw_scene(world, camera, canvas)
         # camera.pos[0] = camera.pos[0] + 5
         # camera.pos[1] = camera.pos[1] + 5
-        # camera.pos[2] = camera.pos[2] + 5
+        camera.pos[2] = camera.pos[2] + .1
         # camera.fov = camera.fov + 1
-        camera.angle[0] = camera.angle[0] + .4
+        # camera.angle[0] = camera.angle[0] + .4
 
         print(camera)
-        clock.tick(2)
+        print()
+        clock.tick(20)
