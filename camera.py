@@ -40,7 +40,7 @@ class Renderer:
         canvas.fill(background)
 
         view_matrix = self.view_matrix(camera)
-        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), 0.01, 1.0)
+        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), 1, 100.0)
 
         transform_matrix = view_matrix * project_matrix
 
@@ -53,9 +53,10 @@ class Renderer:
 
         # Debug: draw center point
         self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2), (0, 200, 0), 8)
-        for tri in item.world_points:
+        for tri in item.world_points[:1]:
             for point in tri:
-                #print(np.dot(np.append(point, [1]), view_matrix))
+                print("Pt:", point)
+                print("Tf:", self.project_point(point, transform_matrix, canvas))
                 self.draw_point(canvas, self.project_point(point, transform_matrix, canvas), (125, 0, 0), 6)
 
         # for i in range(50):
@@ -66,6 +67,7 @@ class Renderer:
 
     def project_point(self, point, transform_matrix, canvar):
         xy = np.dot(np.append(point, [1]), transform_matrix)
+        print(xy[0])
         xy[0] = xy[0] + canvas.get_width() / 2
         xy[1] = xy[1] + canvas.get_height() / 2
         # print(xy)
@@ -73,7 +75,7 @@ class Renderer:
 
 
     def draw_point(self, canvas, point, color, size=1):
-        #print(point)
+        # print(point)
         for i in range(size):
             for j in range(size):
                 canvas.set_at((int(point[0] + i), canvas.get_height() - int(point[1]) + j), color)
@@ -105,12 +107,18 @@ class Renderer:
                          [0, 0, q, -1],
                          [0, 0, qn, 0]])
         """
+        pi180 = pi/180
 
-        a = aspect * (1 / tan((fov * .5) / 180)) # Degrees to Rad
-        b = 1 / tan((fov * .5) / 180) # Degrees to Rad
+        # Scale of x axis
+        a = aspect * (1 / tan((fov * .5) * pi180)) # Degrees to Rad
+        # Scale of y axis
+        b = 1 / tan((fov * .5) * pi180) # Degrees to Rad
+
+        # Remaps z to [0,1]
         c = zfar / (zfar - znear)
+        # Remaps z to [0,1]
         d = 1
-        e = -znear * (zfar / (zfar - znear))
+        e = -(znear * zfar) / (zfar - znear)
 
         return np.array([[a, 0, 0, 0],
                          [0, b, 0, 0],
@@ -119,10 +127,11 @@ class Renderer:
 
 
     def view_matrix(self, camera):
-        sinYaw = sin(camera.angle[0])
-        cosYaw = cos(camera.angle[0])
-        sinPitch = sin(camera.angle[1])
-        cosPitch = cos(camera.angle[1])
+        pi180 = pi/180
+        sinYaw = sin(camera.angle[0]*pi180)
+        cosYaw = cos(camera.angle[0]*pi180)
+        sinPitch = sin(camera.angle[1]*pi180)
+        cosPitch = cos(camera.angle[1]*pi180)
 
         # Modifies the axis vectors to point in the direction of the camera
         xaxis = (cosYaw, 0, -sinYaw)
@@ -134,15 +143,15 @@ class Renderer:
         print(zaxis)
 
         # # This is a RH matrix, z axis (camera pos) is negative
-        # arr =  np.array([[xaxis[0],                     yaxis[0],                   zaxis[0],                0],
-        #                  [xaxis[1],                     yaxis[1],                   zaxis[1],                0],
-        #                  [xaxis[2],                     yaxis[2],                   zaxis[2],                0],
-        #                  [-np.dot(xaxis, camera.pos),   -np.dot(yaxis, camera.pos), -np.dot(zaxis, camera.pos), 1]])
+        arr =  np.array([[xaxis[0],                     yaxis[0],                   zaxis[0],                0],
+                         [xaxis[1],                     yaxis[1],                   zaxis[1],                0],
+                         [xaxis[2],                     yaxis[2],                   zaxis[2],                0],
+                         [-np.dot(xaxis, camera.pos),   -np.dot(yaxis, camera.pos), -np.dot(zaxis, camera.pos), 1]])
 
-        arr = np.array([[xaxis[0], xaxis[1], xaxis[2], -np.dot(xaxis, camera.pos)],
-                        [yaxis[0], yaxis[1], yaxis[2], -np.dot(yaxis, camera.pos)],
-                        [zaxis[0], zaxis[1], zaxis[2], -np.dot(zaxis, camera.pos)],
-                        [       0,        0,        0,                         1 ]])
+        # arr = np.array([[xaxis[0], xaxis[1], xaxis[2], -np.dot(xaxis, camera.pos)],
+        #                 [yaxis[0], yaxis[1], yaxis[2], -np.dot(yaxis, camera.pos)],
+        #                 [zaxis[0], zaxis[1], zaxis[2], -np.dot(zaxis, camera.pos)],
+        #                 [       0,        0,        0,                         1 ]])
 
         return arr
 
@@ -169,6 +178,11 @@ class World:
         Generates a world.
         """
 
+    def all_objects():
+        """
+        Returns all objects in the world
+        """
+
 if __name__ == "__main__":
     window_size = (1000, 1000)
     background = (255, 255, 255)
@@ -181,13 +195,13 @@ if __name__ == "__main__":
     renderer = Renderer()
     world = World()
 
-    item = Item('Cylinder.stl', (50, 100, 1000), (35, 25, 0), 100)
+    item = Item('Cylinder.stl', (50, 50, 100), (35, 25, 0), 100)
 
     while True:
         renderer.draw_scene(world, camera, canvas)
-        # camera.pos[1] = camera.pos[1] + 5
-        # camera.pos[2] = camera.pos[2] + 5
-        camera.fov = camera.fov + 1
+        camera.pos[1] = camera.pos[1] + 5
+        camera.pos[2] = camera.pos[2] + 5
+        # camera.fov = camera.fov + 1
         # camera.angle[0] = camera.angle[0] + .1
         print(camera)
-        clock.tick(5)
+        clock.tick(2)
