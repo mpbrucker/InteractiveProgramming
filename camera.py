@@ -40,7 +40,7 @@ class Renderer:
         canvas.fill(background)
 
         view_matrix = self.view_matrix(camera)
-        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), .001, 10)
+        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), .001, 1)
 
         # transform_matrix = project_matrix * view_matrix
 
@@ -53,7 +53,8 @@ class Renderer:
 
         # Debug: draw center point
         self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2, 1), (0, 200, 0), 8)
-        self.draw_point(canvas, self.project_point((0,0,100), view_matrix, project_matrix, canvas), (125, 0, 0), 4)
+        if np.dot((0, 0, 0, 1), view_matrix)[2] > 0.01:
+            self.draw_point(canvas, self.project_point((0,0,0), view_matrix, project_matrix, canvas), (125, 0, 0), 4)
 
         for tri in item.world_points:
             for point in tri:
@@ -218,20 +219,20 @@ if __name__ == "__main__":
     canvas = pygame.display.set_mode(window_size, 0, 32)
     clock = pygame.time.Clock()
 
-    camera = Camera(init_pos=[0,0,0], init_angle=[0, 0, 0], init_fov=90)
+    camera = Camera(init_pos=[0,0,1], init_angle=[0, 0, 0], init_fov=90)
     renderer = Renderer()
     world = World()
 
-    item = Item('Cylinder.stl', (0, 0, 0), (35, 25, 0), 100)
+    item = Item('Cylinder.stl', (0, 0, 0.1), (0, 0, 0), 1)
 
     while True:
         renderer.draw_scene(world, camera, canvas)
         # camera.pos[0] = camera.pos[0] + 5
         # camera.pos[1] = camera.pos[1] + 5
-        camera.pos[2] = camera.pos[2] + .1
+        camera.pos[2] = camera.pos[2] + .005
         # camera.fov = camera.fov + 1
         # camera.angle[0] = camera.angle[0] + .4
 
-        print(camera)
-        print()
-        clock.tick(20)
+        # print(camera)
+        # print()
+        clock.tick(30)
