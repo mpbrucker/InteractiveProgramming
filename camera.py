@@ -55,6 +55,9 @@ class Renderer:
 
         pygame.display.flip()
 
+    def draw_point(self, canvas, point, color):
+        canvas.set_at(point, color)
+
     def persp_proj_matrix(self, fov, aspect, znear, zfar):
         """
         Return a projection matrix for the given parameters
