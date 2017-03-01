@@ -2,6 +2,7 @@ import numpy as np
 from math import sin, cos, pi
 from stl import mesh
 from mpl_toolkits.mplot3d import Axes3D
+import matplotlib
 # Uncomment this line and change it if the default display backend doesn't work with matplotlib:
 # matplotlib.use('GTK3Cairo')
 import matplotlib.pyplot as plt
@@ -9,7 +10,7 @@ import matplotlib.pyplot as plt
 
 class Item():
 
-    def __init__(self, file_name, world_coords, orientation, color=(255, 0, 0)):
+    def __init__(self, file_name, world_coords, orientation, scale, color=(255, 0, 0)):
         """
         Initializes a new item at the coordinates (x,y,z).
         """
@@ -17,7 +18,7 @@ class Item():
         self.vecs = self.model_to_points(file_name)
 
         # Get the rotation matrix using the rotations about the x, y, and z axes
-        self.world_points = self.get_transformed_points(self.vecs, world_coords, orientation)
+        self.world_points = self.get_transformed_points(self.vecs, world_coords, orientation, scale)
         self.color = color  # Set the color of the object
         self.location = world_coords  # The canonical location of the object
 
@@ -31,15 +32,21 @@ class Item():
         obj_mesh = mesh.Mesh.from_file(file_name)
         return obj_mesh.vectors
 
-    def get_transformed_points(self, points, coords, orientation):
+    def get_transformed_points(self, points, coords, orientation, scale):
         """
         Returns the points of the object as translated by coords and rotated by orientation
         """
         # Combines the translation and rotation matrices
-        transform = self.get_translation_matrix(coords).dot(self.get_rotation_matrix(orientation))
+        transform = self.get_translation_matrix(coords).dot(self.get_rotation_matrix(orientation).dot(self.get_scale_matrix(scale)))
         new_points = np.zeros(points.shape)  # The matrix of transformed points
         new_points = [np.array([transform.dot(np.append(point, [1]))[0:3] for point in triangle]) for triangle in points]
         return new_points
+
+    def get_scale_matrix(self, scale):
+        ident = np.identity(4)
+        for x in range(3):
+            ident[x, x] = scale
+        return ident
 
     def get_translation_matrix(self, world_coords):
         """
@@ -92,5 +99,5 @@ class Item():
         plt.show()
 
 if __name__ == "__main__":
-    item = Item('Cylinder.stl', (5, 1, 7), (90, 30, 0))
-    item.display_model()
+    # item = Item('Cylinder.stl', (5, 1, 7), (90, 30, 0), 4)
+    # item.display_model()
