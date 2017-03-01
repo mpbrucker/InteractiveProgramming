@@ -42,12 +42,14 @@ class Renderer:
         # TODO: add transformMatrix = worldMatrix * viewMatrix * projectionMatrix and then do it
 
         view_matrix = self.view_matrix(camera)
-        project_matrix = self.persp_proj_matrix(fov, canvas.width/canvas.length, 0.01, 1.0)
+        project_matrix = self.persp_proj_matrix(fov, canvas.get_width()/canvas.get_height(), 0.01, 1.0)
 
         transform_matrix = view_matrix * project_matrix
 
-        for i in item.world_points:
-
+        for tri in item.world_points:
+            for point in tri:
+                #print(point)
+                self.draw_point(canvas, np.dot(np.append(point, [1]), transform_matrix)[:2], (125, 0, 0))
 
         # for i in range(50):
         #     for j in range(50):
@@ -56,7 +58,8 @@ class Renderer:
         pygame.display.flip()
 
     def draw_point(self, canvas, point, color):
-        canvas.set_at(point, color)
+        #print(point)
+        canvas.set_at((int(point[0]), canvas.get_height() - int(point[1])), color)
 
     def persp_proj_matrix(self, fov, aspect, znear, zfar):
         """
@@ -100,7 +103,7 @@ class Renderer:
         return np.array([[xaxis[0],                     yaxis[0],                   zaxis[0],                0],
                          [xaxis[1],                     yaxis[1],                   zaxis[1],                0],
                          [xaxis[2],                     yaxis[2],                   zaxis[2],                0],
-                         [-np.dot(xaxis, camera.pos),   -np.dot(yaxis, camera.pos), -dot(zaxis, camera.pos), 1]])
+                         [-np.dot(xaxis, camera.pos),   -np.dot(yaxis, camera.pos), -np.dot(zaxis, camera.pos), 1]])
 
 class World:
     """
@@ -125,7 +128,7 @@ class World:
         """
 
 if __name__ == "__main__":
-    window_size = (400, 400)
+    window_size = (1000, 1000)
     background = (255, 255, 255)
 
     pygame.init()
@@ -136,7 +139,7 @@ if __name__ == "__main__":
     renderer = Renderer()
     world = World()
 
-    item = Item('Cylinder.stl', (5, 1, 7), (90, 30, 0))
+    item = Item('Cylinder.stl', (200, 200, .1), (0, 30, 0))
 
     while True:
         renderer.draw_scene(world, camera, canvas)
