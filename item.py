@@ -1,16 +1,11 @@
 import numpy as np
-import matplotlib
 from math import sin, cos, pi
 from stl import mesh
-from mpl_toolkits.mplot3d import Axes3D
-# Uncomment this line and change it if the default display backend doesn't work with matplotlib:
-matplotlib.use('GTK3Cairo')
-import matplotlib.pyplot as plt
 
 
 class Item():
 
-    def __init__(self, file_name, world_coords, orientation, color=(255,0,0)):
+    def __init__(self, file_name, world_coords, orientation, color=(255, 0, 0)):
         """
         Initializes a new item at the coordinates (x,y,z).
         """
@@ -63,35 +58,3 @@ class Item():
                         [cosd(x)*sind(y)+sind(x)*sind(y)*cosd(z), cosd(x)*cosd(z)-sind(x)*sind(y)*sind(z), -sind(x)*cosd(y), 0],
                         [sind(x)*sind(z)-cosd(x)*sind(y)*cosd(z), sind(x)*cosd(z) + cosd(x)*sind(y)*sind(z), cosd(x)*cosd(y), 0],
                         [0, 0, 0, 1]])
-
-    def display_model(self):
-        """
-        Displays the object using matplotlib. Useful for debugging.
-        """
-        fig = plt.figure()
-        vectors = self.vecs
-        ax = fig.add_subplot(111, projection='3d')
-        for points in vectors:
-            x = points[:, 0]
-            y = points[:, 1]
-            z = points[:, 2]
-            ax.plot(x, y, z)
-
-        world_vectors = self.world_points
-        for points in world_vectors:
-            x2 = points[:, 0]
-            y2 = points[:, 1]
-            z2 = points[:, 2]
-            ax.plot(x2, y2, z2)
-
-        ax.set_xlim([0, 10])
-        ax.set_ylim([0, 10])
-        ax.set_zlim([0, 10])
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        plt.show()
-
-
-item = Item('Cylinder.stl', (5, 6, 7), (90, 0, 0))
-item.display_model()
