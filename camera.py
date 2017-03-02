@@ -41,15 +41,15 @@ class Renderer:
         """
 
         background = (255, 255, 255)
-        item = Item('Cylinder.stl', (0, 0, 10), (35, 25, 0), 10)
+        item = Item('cube2.stl', (0, 0, 0), (0, 0, 0), 1)
 
         self.frame += 1
 
-        # Reset to black
+        # Reset to white
         canvas.fill(background)
 
         view_matrix = self.view_matrix(camera)
-        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), .001, 1)
+        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), .1, 1)
 
         # transform_matrix = project_matrix * view_matrix
 
@@ -63,22 +63,26 @@ class Renderer:
         # Debug: draw center point
         self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2, 1), (0, 200, 0), 8)
 
-        test_points = [[0,0,0,1], [10, 10, 10, 10], [0, 10, 0, 1], [0, 0, 10, 1], [0, 10, 10, 1], [10, 10, 0, 1]]
-
-        for point in test_points:
-            if np.dot(point, view_matrix)[2] > 0.01:
-                self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 4, point)
-
-        # for tri in item.world_points:
-        #     for point in tri:
-        #         point_view = np.dot(np.append(point, [1]), view_matrix)
+        # test_points = [[0,0,0,1], [10, 10, 10, 1]]#, [0, 10, 0, 1], [0, 0, 10, 1], [0, 10, 10, 1], [10, 10, 0, 1]]
         #
-        #         if point_view[2] > 0.01:
-        #             # print("Pt:", point)
-        #             # print("Pt V:", point_view)
-        #             # print("Pt Tf:", self.project_point(point, view_matrix, project_matrix, canvas))
+        # for point in test_points:
+        #     print("Pt:", point)
+        #     print("Pt V:", np.dot(point, view_matrix))
+        #     print("Pt Tf:", self.project_point(point, view_matrix, project_matrix, canvas))
         #
-        #             self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6)
+        #     if np.dot(point, view_matrix)[2] > 0.01:
+        #         self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 4, point)
+
+        for tri in item.world_points:
+            for point in tri:
+                point_view = np.dot(np.append(point, [1]), view_matrix)
+
+                if point_view[2] > 0.01:
+                    # print("Pt:", point)
+                    # print("Pt V:", point_view)
+                    # print("Pt Tf:", self.project_point(point, view_matrix, project_matrix, canvas))
+
+                    self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6, point)
 
         # for i in range(50):
         #     for j in range(50):
@@ -89,10 +93,12 @@ class Renderer:
     def project_point(self, point, view_matrix, project_matrix, canvas):
         if len(point) == 3:
             point = np.append(point, [1])
+
         xy = np.dot(point, view_matrix)
         xy = np.dot(xy, project_matrix)
 
-        xy = xy/xy[3]
+        # Magic number makes the stretch in z smaller. Tweak to perfection. Can also be fixed in the projection matrix
+        xy = xy/(xy[3]*.02)
 
         xy[0] = xy[0] + canvas.get_width() / 2
         xy[1] = xy[1] + canvas.get_height() / 2
@@ -104,12 +110,12 @@ class Renderer:
         # print(point)
         # Basic clipping
         if point[2] > 0.01:
-            basicfont = pygame.font.SysFont(None, 12)
-            text = basicfont.render(str(point) + "\n" + str(orig_coordinates), True, (0, 0, 0), (255, 255, 255))
-            textrect = text.get_rect()
-            textrect.centerx = point[0]
-            textrect.centery = canvas.get_height() - int(point[1]) + 5
-            canvas.blit(text, textrect)
+            # basicfont = pygame.font.SysFont(None, 12)
+            # text = basicfont.render(str(point) + "\n" + str(orig_coordinates), True, (0, 0, 0), (255, 255, 255))
+            # textrect = text.get_rect()
+            # textrect.centerx = point[0]
+            # textrect.centery = canvas.get_height() - int(point[1]) + 5
+            # canvas.blit(text, textrect)
 
             for i in range(size):
                 for j in range(size):
@@ -242,7 +248,7 @@ if __name__ == "__main__":
     renderer = Renderer()
     world = World()
 
-    item = Item('Cylinder.stl', (0, 0, 0), (0, 0, 0), 1)
+    item = Item('Cylinder.stl', (0, 0, -1), (0, 0, 0), 10)
 
     while True:
         print(camera)

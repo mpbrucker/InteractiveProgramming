@@ -10,7 +10,7 @@ class Scene:
         Initializes a new scene.  By default, puts one object in and sets up everything in the correct positions.
         """
         self.world = World()
-        self.camera = Camera(init_pos=[0, 0, -1], init_angle=[0, 0, 0], init_fov=.5)
+        self.camera = Camera(init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.25)
         self.renderer = Renderer()
 
     def begin_scene(self, window_size=(1000, 1000)):
@@ -50,7 +50,7 @@ class Scene:
             up_keys = [event.key for event in events if event.type == pygame.KEYUP]
             for idx in range(4):
                 keys_pressed[idx] += int(event_keys[idx] in down_keys) - int(event_keys[idx] in up_keys)
-            self.camera.move(keys_pressed[2]-keys_pressed[3], keys_pressed[0]-keys_pressed[1], speed=0.0001)
+            self.camera.move(keys_pressed[2]-keys_pressed[3], keys_pressed[0]-keys_pressed[1], speed=0.001)
             x, y = pygame.mouse.get_pos()
 
             # This block avoids massive leaps in the camera position when regaining focus
