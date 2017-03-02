@@ -34,7 +34,7 @@ class Scene:
         clock = pygame.time.Clock()
         while True:
             self.renderer.draw_scene(self.world, self.camera, canvas)
-            clock.tick(30)
+            clock.tick(30) # 30 FPS
 
     def get_user_input(self):
         """
@@ -68,9 +68,6 @@ class Scene:
             # last_y = mouse_y
 
             print(self.camera)
-
-
-
 
 
     def update_camera(self):
