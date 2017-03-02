@@ -10,7 +10,7 @@ class Scene:
         Initializes a new scene.  By default, puts one object in and sets up everything in the correct positions.
         """
         self.world = World()
-        self.camera = Camera(init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=60)
+        self.camera = Camera(init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.25)
         self.renderer = Renderer()
 
     def begin_scene(self, window_size=(1000, 1000)):
@@ -34,7 +34,7 @@ class Scene:
         clock = pygame.time.Clock()
         while True:
             self.renderer.draw_scene(self.world, self.camera, canvas)
-            clock.tick(30)
+            clock.tick(30) # 30 FPS
 
     def get_user_input(self):
         """
@@ -61,16 +61,13 @@ class Scene:
             except IndexError:
                 pass
 
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            mouse_d = [mouse_x-last_x, last_y-mouse_y]
-            self.camera.rotate(mouse_d[0], mouse_d[1], 0)
-            last_x = mouse_x
-            last_y = mouse_y
+            # mouse_x, mouse_y = pygame.mouse.get_pos()
+            # mouse_d = [mouse_x-last_x, last_y-mouse_y]
+            # self.camera.rotate(mouse_d[0], mouse_d[1], 0)
+            # last_x = mouse_x
+            # last_y = mouse_y
 
             print(self.camera)
-
-
-
 
 
     def update_camera(self):
