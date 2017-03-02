@@ -19,9 +19,9 @@ class Camera:
     def __str__(self):
         return "Camera object at: {}, {}, {}. Angles: {}, {}, {}. Fov: {}".format(self.pos[0], self.pos[1], self.pos[2], self.angle[0], self.angle[1], self.angle[2], self.fov)
 
-    def move(self, x, y, speed=0.0001):
-        self.pos[0] += x*speed
-        self.pos[2] += y*speed
+    def move(self, movement, speed=0.0001):
+        self.pos[0] += (movement[0]*speed*cos(self.angle[0]))+(movement[2]*speed*sin(self.angle[0]))
+        self.pos[2] += (movement[0]*speed*sin(-self.angle[0]))+(movement[2]*speed*cos(self.angle[0]))
 
     def rotate(self, yaw, pitch, roll, sensitivity=.1):
         self.angle[0] += yaw*sensitivity
@@ -41,7 +41,7 @@ class Renderer:
 
 
         # TODO: Use world items
-        item = Item('cube2.stl', (0, 0, 0), (0, 0, 0), 1)
+        item = Item('Cylinder.stl', (0, 0, 0), (0, 0, 0), 1)
 
         # Reset to white
         background = (255, 255, 255)
@@ -204,28 +204,28 @@ class World:
         Returns all objects in the world
         """
 
-if __name__ == "__main__":
-    window_size = (1000, 1000)
-    background = (255, 255, 255)
-
-    pygame.init()
-    canvas = pygame.display.set_mode(window_size, 0, 32)
-    clock = pygame.time.Clock()
-
-    camera = Camera(init_pos=[0,0,0], init_angle=[0, 0, 0])
-    renderer = Renderer()
-    world = World()
-
-    while True:
-        print(camera)
-        renderer.draw_scene(world, camera, canvas)
-
-        # camera.pos[0] = camera.pos[0] + 5
-        # camera.pos[1] = camera.pos[1] + 5
-        camera.pos[2] = camera.pos[2] + .005
-        # camera.fov = camera.fov + 1
-        # camera.angle[0] = camera.angle[0] + .4
-
-
-        # print()
-        clock.tick(30)
+# if __name__ == "__main__":
+#     window_size = (1000, 1000)
+#     background = (255, 255, 255)
+#
+#     pygame.init()
+#     canvas = pygame.display.set_mode(window_size, 0, 32)
+#     clock = pygame.time.Clock()
+#
+#     camera = Camera(init_pos=[0,0,0], init_angle=[0, 0, 0])
+#     renderer = Renderer()
+#     world = World()
+#
+#     while True:
+#         print(camera)
+#         renderer.draw_scene(world, camera, canvas)
+#
+#         # camera.pos[0] = camera.pos[0] + 5
+#         # camera.pos[1] = camera.pos[1] + 5
+#         camera.pos[2] = camera.pos[2] + .005
+#         # camera.fov = camera.fov + 1
+#         # camera.angle[0] = camera.angle[0] + .4
+#
+#
+#         # print()
+#         clock.tick(30)

@@ -17,26 +17,29 @@ class Scene:
         """
         Begins the rendering and user input MVC process.
         """
+        thread_lock = threading.Lock()
         canvas = pygame.display.set_mode(window_size, 0, 32)
         pygame.mouse.set_visible(False)
         # pygame.event.set_grab(True)  # Only uncomment this if you're SURE it won't break everything
-        render_thread = threading.Thread(target=self.render_cycle, args=(canvas,))
+        render_thread = threading.Thread(target=self.render_cycle, args=(canvas,thread_lock,))
         render_thread.start()
 
-        input_thread = threading.Thread(target=self.get_user_input)
+        input_thread = threading.Thread(target=self.get_user_input, args=(thread_lock,))
         input_thread.start()
 
-    def render_cycle(self, canvas):
+    def render_cycle(self, canvas, lock):
         """
         handles the continuous cycle of rendering each frame.
         """
         pygame.init()
         clock = pygame.time.Clock()
         while True:
+            lock.acquire()
             self.renderer.draw_scene(self.world, self.camera, canvas)
-            clock.tick(30) # 30 FPS
+            lock.release()
+            clock.tick(30)  # 30 FPS
 
-    def get_user_input(self):
+    def get_user_input(self, lock):
         """
         Gets the input from the user.
         """
@@ -46,11 +49,17 @@ class Scene:
         last_x, last_y = pygame.mouse.get_pos()
         while True:
             events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        print("Quit!")
+
+
             down_keys = [event.key for event in events if event.type == pygame.KEYDOWN]
             up_keys = [event.key for event in events if event.type == pygame.KEYUP]
             for idx in range(4):
                 keys_pressed[idx] += int(event_keys[idx] in down_keys) - int(event_keys[idx] in up_keys)
-            self.camera.move(keys_pressed[2]-keys_pressed[3], keys_pressed[0]-keys_pressed[1], speed=0.001)
+            self.camera.move((keys_pressed[2]-keys_pressed[3], 0, keys_pressed[0]-keys_pressed[1]), speed=0.0001)
             x, y = pygame.mouse.get_pos()
 
             # This block avoids massive leaps in the camera position when regaining focus
@@ -61,13 +70,15 @@ class Scene:
             except IndexError:
                 pass
 
-            # mouse_x, mouse_y = pygame.mouse.get_pos()
-            # mouse_d = [mouse_x-last_x, last_y-mouse_y]
-            # self.camera.rotate(mouse_d[0], mouse_d[1], 0)
-            # last_x = mouse_x
-            # last_y = mouse_y
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            mouse_d = [mouse_x-last_x, last_y-mouse_y]
+            lock.acquire()
+            self.camera.rotate(mouse_d[0], -mouse_d[1], 0, sensitivity=.001)
+            lock.release()
+            last_x = mouse_x
+            last_y = mouse_y
 
-            print(self.camera)
+            # print(self.camera)
 
 
     def update_camera(self):
