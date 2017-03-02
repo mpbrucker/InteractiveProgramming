@@ -17,11 +17,11 @@ class Camera:
     def __str__(self):
         return "Camera object at: {}, {}, {}. Angles: {}, {}, {}. Fov: {}".format(self.pos[0], self.pos[1], self.pos[2], self.angle[0], self.angle[1], self.angle[2], self.fov)
 
-    def move(self, x, y, speed=0.001):
+    def move(self, x, y, speed=10):
         self.pos[0] += x*speed
         self.pos[1] += y*speed
 
-    def rotate(self, yaw, pitch, roll, sensitivity=.001):
+    def rotate(self, yaw, pitch, roll, sensitivity=.1):
         self.angle[0] += yaw*sensitivity
         self.angle[1] += pitch*sensitivity
         self.angle[2] += roll*sensitivity
