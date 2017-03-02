@@ -53,14 +53,18 @@ class Renderer:
         # Draw center point
         self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2, 1), (0, 200, 0), 6)
 
-
         for tri in item.world_points:
-            for point in tri:
-                point_view = np.dot(np.append(point, [1]), view_matrix)
+            for point0 in tri:
+                for point1 in tri:
+                    self.draw_line(canvas, self.project_point(point0, view_matrix, project_matrix, canvas), self.project_point(point1, view_matrix, project_matrix, canvas), (125, 0, 0), 3)
 
-                # Cull points behind camera
-                if point_view[2] > 0.01:
-                    self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6, point)
+        # for tri in item.world_points:
+        #     for point in tri:
+        #         point_view = np.dot(np.append(point, [1]), view_matrix)
+        #
+        #         # Cull points behind camera
+        #         if point_view[2] > 0.01:
+        #             self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6, point)
 
 
         pygame.display.flip()
@@ -97,6 +101,25 @@ class Renderer:
         for i in range(size):
             for j in range(size):
                 canvas.set_at((int(point[0] + i), canvas.get_height() - int(point[1]) + j), color)
+
+    def draw_line(self, canvas, point0, point1, color, size=1):
+        """
+        Draw line between two points.
+        """
+
+        dist = numpy.linalg.norm((point0[0], point0[1]) - (point1[0], point1[1]))
+
+        if dist < 2:
+            return 0
+
+        middle_point = point0 + (point1 - point0)/2
+        self.draw_point(canvas, middle_point, color, size)
+
+        self.draw_line(canvas, point0, middle_point, color, size)
+        self.draw_line(canvas, middle_point, point1, color, size)
+
+
+
 
     def persp_proj_matrix(self, fov, aspect, znear, zfar):
         """
