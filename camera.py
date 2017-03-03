@@ -41,7 +41,7 @@ class Renderer:
 
 
         # TODO: Use world items
-        item = Item('cube.stl', (0, 0, 0), (0, 0, 0), 1)
+        item = Item('cube2.stl', (0, 0, 0), (0, 0, 0), 1)
 
         # Reset to white
         background = (255, 255, 255)
@@ -53,17 +53,17 @@ class Renderer:
         # Draw center point
         self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2, 1), (0, 200, 0), 6)
 
-        test_lines = (((0,0,1,1),(1,10,10,1)), ((0,0,1,1),(10,10,10,1)))
-        for line in test_lines:
-            self.draw_line(canvas, self.project_point(line[0], view_matrix, project_matrix, canvas), self.project_point(line[1], view_matrix, project_matrix, canvas), (125, 0, 0), 3)
+        # test_lines = (((0,0,1,1),(1,10,10,1)), ((0,0,1,1),(10,10,10,1)))
+        # for line in test_lines:
+        #     self.draw_line(canvas, self.project_point(line[0], view_matrix, project_matrix, canvas), self.project_point(line[1], view_matrix, project_matrix, canvas), (125, 0, 0), 3)
 
-        # for tri in item.world_points:
-        #     for point in tri:
-        #         point_view = np.dot(np.append(point, [1]), view_matrix)
-        #
-        #         # Cull points behind camera
-        #         if point_view[2] > 0.01:
-        #             self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6, point)
+        for tri in item.world_points:
+            for point in tri:
+                point_view = np.dot(np.append(point, [1]), view_matrix)
+
+                # Cull points behind camera
+                if point_view[2] > 0.01:
+                    self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6, point)
 
 
         pygame.display.flip()
@@ -93,14 +93,6 @@ class Renderer:
 
 
     def draw_point(self, canvas, point, color, size=1, orig_coordinates=""):
-        # # Label each point with world coordinates and current coordinates
-        # basicfont = pygame.font.SysFont(None, 12)
-        # text = basicfont.render(str(point) + "\n" + str(orig_coordinates), True, (0, 0, 0), (255, 255, 255))
-        # textrect = text.get_rect()
-        # textrect.centerx = point[0]
-        # textrect.centery = canvas.get_height() - int(point[1]) + 5
-        # canvas.blit(text, textrect)
-
         # print(point)
         if point[2] > .01:
             for i in range(size):
