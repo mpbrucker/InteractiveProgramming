@@ -1,4 +1,4 @@
-from math import tan, sin, cos, pi
+from math import tan, sin, cos, pi, sqrt
 import numpy as np
 import pygame
 from item import *
@@ -41,7 +41,7 @@ class Renderer:
 
 
         # TODO: Use world items
-        item = Item('Cylinder.stl', (0, 0, 0), (0, 0, 0), 1)
+        item = Item('cube.stl', (0, 0, 0), (0, 0, 0), 1)
 
         # Reset to white
         background = (255, 255, 255)
@@ -53,14 +53,17 @@ class Renderer:
         # Draw center point
         self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2, 1), (0, 200, 0), 6)
 
+        test_lines = (((0,0,1,1),(1,10,10,1)), ((0,0,1,1),(10,10,10,1)))
+        for line in test_lines:
+            self.draw_line(canvas, self.project_point(line[0], view_matrix, project_matrix, canvas), self.project_point(line[1], view_matrix, project_matrix, canvas), (125, 0, 0), 3)
 
-        for tri in item.world_points:
-            for point in tri:
-                point_view = np.dot(np.append(point, [1]), view_matrix)
-
-                # Cull points behind camera
-                if point_view[2] > 0.01:
-                    self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6, point)
+        # for tri in item.world_points:
+        #     for point in tri:
+        #         point_view = np.dot(np.append(point, [1]), view_matrix)
+        #
+        #         # Cull points behind camera
+        #         if point_view[2] > 0.01:
+        #             self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6, point)
 
 
         pygame.display.flip()
@@ -72,8 +75,12 @@ class Renderer:
             point = np.append(point, [1])
 
         # Project the points to the camera view and then a projection view
+
+        # print("point:", point)
         xy = np.dot(point, view_matrix)
+        # print("xyV:", xy)
         xy = np.dot(xy, project_matrix)
+        # print("xyP:", xy)
 
         # Makes the perspective happen. w is based on z, and adjusts x and y properly
         # The magic number makes the stretch in z smaller. Tweak to perfection. Can also be fixed in the projection matrix
@@ -94,9 +101,38 @@ class Renderer:
         # textrect.centery = canvas.get_height() - int(point[1]) + 5
         # canvas.blit(text, textrect)
 
-        for i in range(size):
-            for j in range(size):
-                canvas.set_at((int(point[0] + i), canvas.get_height() - int(point[1]) + j), color)
+        # print(point)
+        if point[2] > .01:
+            for i in range(size):
+                for j in range(size):
+                    canvas.set_at((int(point[0]) + i, canvas.get_height() - int(point[1]) + j), color)
+
+
+    def dist(self, point0, point1):
+        return sqrt((point0[0]-point1[0])**2 + (point0[1] - point1[1])**2)
+
+    def middle(self, point0, point1):
+        return [(point1[0] + (point0[0] - point1[0])/2), (point1[1] + (point0[1] - point1[1])/2), (point1[2] + (point0[2] - point1[2])/2), 1]
+
+    def draw_line(self, canvas, point0, point1, color, size=1):
+        """
+        Draw line between two points.
+        """
+
+        dist = self.dist(point0, point1)
+
+
+        if dist < 2:
+            return
+
+        middle_point = self.middle(point0, point1)
+        self.draw_point(canvas, middle_point, color, size)
+
+        self.draw_line(canvas, point0, middle_point, color, size)
+        self.draw_line(canvas, middle_point, point1, color, size)
+
+
+
 
     def persp_proj_matrix(self, fov, aspect, znear, zfar):
         """
@@ -204,28 +240,28 @@ class World:
         Returns all objects in the world
         """
 
-# if __name__ == "__main__":
-#     window_size = (1000, 1000)
-#     background = (255, 255, 255)
-#
-#     pygame.init()
-#     canvas = pygame.display.set_mode(window_size, 0, 32)
-#     clock = pygame.time.Clock()
-#
-#     camera = Camera(init_pos=[0,0,0], init_angle=[0, 0, 0])
-#     renderer = Renderer()
-#     world = World()
-#
-#     while True:
-#         print(camera)
-#         renderer.draw_scene(world, camera, canvas)
-#
-#         # camera.pos[0] = camera.pos[0] + 5
-#         # camera.pos[1] = camera.pos[1] + 5
-#         camera.pos[2] = camera.pos[2] + .005
-#         # camera.fov = camera.fov + 1
-#         # camera.angle[0] = camera.angle[0] + .4
-#
-#
-#         # print()
-#         clock.tick(30)
+if __name__ == "__main__":
+    window_size = (1000, 1000)
+    background = (255, 255, 255)
+
+    pygame.init()
+    canvas = pygame.display.set_mode(window_size, 0, 32)
+    clock = pygame.time.Clock()
+
+    camera = Camera(init_pos=[0,0,-1], init_angle=[0, 0, 0])
+    renderer = Renderer()
+    world = World()
+
+    while True:
+        print(camera)
+        renderer.draw_scene(world, camera, canvas)
+
+        # camera.pos[0] = camera.pos[0] + 5
+        # camera.pos[1] = camera.pos[1] + 5
+        camera.pos[2] = camera.pos[2] + .005
+        # camera.fov = camera.fov + 1
+        # camera.angle[0] = camera.angle[0] + .4
+
+
+        # print()
+        clock.tick(30)

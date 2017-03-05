@@ -2,6 +2,7 @@ from camera import *
 from item import *
 import pygame
 import threading
+import sys
 
 
 class Scene:
@@ -12,6 +13,7 @@ class Scene:
         self.world = World()
         self.camera = Camera(init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.25)
         self.renderer = Renderer()
+        self.running = True
 
     def begin_scene(self, window_size=(1000, 1000)):
         """
@@ -33,7 +35,7 @@ class Scene:
         """
         pygame.init()
         clock = pygame.time.Clock()
-        while True:
+        while self.running:
             lock.acquire()
             self.renderer.draw_scene(self.world, self.camera, canvas)
             lock.release()
@@ -43,13 +45,21 @@ class Scene:
         """
         Gets the input from the user.
         """
+
         event_keys = (pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a)
         keys_pressed = [0, 0, 0, 0]  # The pressed status of the keys
         mouse_x, mouse_y = pygame.mouse.get_pos()
         on_screen = True
         is_grabbed = True
-        while True:
+
+
+        while self.running:
             events = pygame.event.get()
+
+            for event in events:
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    print("Quitting...")
 
             # Jesus take the wheel, hope this doesn't break everything
 
@@ -93,6 +103,9 @@ class Scene:
 
             # print(self.camera)
 
+        # On quit, gracefully exit
+        pygame.quit()
+        sys.exit()
 
     def update_camera(self):
         """
