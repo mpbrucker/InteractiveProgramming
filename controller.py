@@ -37,7 +37,7 @@ class Scene:
             lock.acquire()
             self.renderer.draw_scene(self.world, self.camera, canvas)
             lock.release()
-            clock.tick(10)  # 30 FPS
+            clock.tick(120)  # 30 FPS
 
     def get_user_input(self, lock):
         """
@@ -57,7 +57,7 @@ class Scene:
             up_keys = [event.key for event in events if event.type == pygame.KEYUP]
             for idx in range(4):
                 keys_pressed[idx] += int(event_keys[idx] in down_keys) - int(event_keys[idx] in up_keys)
-            self.camera.move((keys_pressed[2]-keys_pressed[3], 0, keys_pressed[0]-keys_pressed[1]), speed=0.0001)
+            self.camera.move((keys_pressed[2]-keys_pressed[3], 0, -keys_pressed[0]+keys_pressed[1]), speed=0.0001)
 
             # This block avoids massive leaps in the camera position when regaining focus
             try:
@@ -86,7 +86,7 @@ class Scene:
             mouse_d = [mouse_x-500, 500-mouse_y]
             if is_grabbed:
                 lock.acquire()
-                self.camera.rotate(mouse_d[0], -mouse_d[1], 0, sensitivity=.01)
+                self.camera.rotate(-mouse_d[0], -mouse_d[1], 0, sensitivity=.01)
                 lock.release()
                 pygame.mouse.set_pos(500, 500)
 
