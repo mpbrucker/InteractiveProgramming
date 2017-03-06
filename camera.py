@@ -1,7 +1,7 @@
 from math import tan, sin, cos, pi, sqrt
 import numpy as np
 import pygame
-from item import *
+from item import Item
 
 
 class Camera:
@@ -20,10 +20,16 @@ class Camera:
         return "Camera object at: {}, {}, {}. Angles: {}, {}, {}. Fov: {}".format(self.pos[0], self.pos[1], self.pos[2], self.angle[0], self.angle[1], self.angle[2], self.fov)
 
     def move(self, movement, speed=0.0001):
+        """
+        Moves the position of the camera object along the x and z axes
+        """
         self.pos[0] += (movement[0]*speed*cos(self.angle[0]))+(movement[2]*speed*sin(self.angle[0]))
         self.pos[2] += (movement[0]*speed*sin(-self.angle[0]))+(movement[2]*speed*cos(self.angle[0]))
 
     def rotate(self, yaw, pitch, roll, sensitivity=.1):
+        """
+        Rotates the orientation matrix of the camera
+        """
         self.angle[0] += yaw*sensitivity
         self.angle[1] += pitch*sensitivity
         self.angle[2] += roll*sensitivity
@@ -39,10 +45,6 @@ class Renderer:
         Draws the frame and updates the display.
         """
 
-
-        # TODO: Use world items
-        item = Item('cube.stl', (0, 0, 0), (0, 0, 0), 1)
-
         # Reset to white
         background = (255, 255, 255)
         canvas.fill(background)
@@ -53,18 +55,25 @@ class Renderer:
         # Draw center point
         self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2, 1), (0, 200, 0), 6)
 
-        test_lines = (((0,0,1,1),(1,10,10,1)), ((0,0,1,1),(10,10,10,1)))
-        for line in test_lines:
-            self.draw_line(canvas, self.project_point(line[0], view_matrix, project_matrix, canvas), self.project_point(line[1], view_matrix, project_matrix, canvas), (125, 0, 0), 3)
+        # test_lines = (((0,0,1,1),(1,10,10,1)), ((0,0,1,1),(10,10,10,1)))
+        # for line in test_lines:
+        #     self.draw_line(canvas, self.project_point(line[0], view_matrix, project_matrix, canvas), self.project_point(line[1], view_matrix, project_matrix, canvas), (0, 255, 0), 3)
 
-        # for tri in item.world_points:
-        #     for point in tri:
-        #         point_view = np.dot(np.append(point, [1]), view_matrix)
-        #
-        #         # Cull points behind camera
-        #         if point_view[2] > 0.01:
-        #             self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6, point)
+        for item in world.get_objects():
+            for tri in item.world_points:
+                for point in tri:
+                    transformed_point = self.project_point(point, view_matrix, project_matrix, canvas)
+                    self.draw_point(canvas, transformed_point, (125, 0, 0), 6, point)
 
+
+        # for item in world.get_objects():
+        #     for idx, tri in enumerate(item.world_points):
+        #         print("{}/{}".format(idx+1,len(item.world_points)))
+        #         for idx, point in enumerate(tri):
+        #             point2 = tri[(idx+1)%2]
+        #             print(self.project_point(point, view_matrix, project_matrix, canvas))
+        #             print(self.project_point(point2, view_matrix, project_matrix, canvas))
+        #             self.draw_line(canvas, self.project_point(point, view_matrix, project_matrix, canvas), self.project_point(point2, view_matrix, project_matrix, canvas), (0, 255, 0), 3)
 
         pygame.display.flip()
 
@@ -80,17 +89,16 @@ class Renderer:
         xy = np.dot(point, view_matrix)
         # print("xyV:", xy)
         xy = np.dot(xy, project_matrix)
-        # print("xyP:", xy)
 
         # Makes the perspective happen. w is based on z, and adjusts x and y properly
         # The magic number makes the stretch in z smaller. Tweak to perfection. Can also be fixed in the projection matrix
         xy = xy/(xy[3]*.02)
-
         xy[0] = xy[0] + canvas.get_width() / 2
         xy[1] = xy[1] + canvas.get_height() / 2
         # print(xy)
         return xy
 
+    # def draw_
 
     def draw_point(self, canvas, point, color, size=1, orig_coordinates=""):
         # # Label each point with world coordinates and current coordinates
@@ -101,8 +109,8 @@ class Renderer:
         # textrect.centery = canvas.get_height() - int(point[1]) + 5
         # canvas.blit(text, textrect)
 
-        # print(point)
-        if point[2] > .01:
+        if point[2] > .01 and 0 <= point[0] <= canvas.get_height() and 0 <= point[1] <= canvas.get_width():
+            # print(point)
             for i in range(size):
                 for j in range(size):
                     canvas.set_at((int(point[0]) + i, canvas.get_height() - int(point[1]) + j), color)
@@ -120,16 +128,18 @@ class Renderer:
         """
 
         dist = self.dist(point0, point1)
-
-
         if dist < 2:
             return
 
         middle_point = self.middle(point0, point1)
-        self.draw_point(canvas, middle_point, color, size)
+        if middle_point[2] > 0.01:
+            self.draw_point(canvas, middle_point, color, size)
 
-        self.draw_line(canvas, point0, middle_point, color, size)
-        self.draw_line(canvas, middle_point, point1, color, size)
+        try:
+            self.draw_line(canvas, point0, middle_point, color, size)
+            self.draw_line(canvas, middle_point, point1, color, size)
+        except RuntimeError:
+            return
 
 
 
@@ -216,52 +226,47 @@ class Renderer:
 
 class World:
     """
-    Holds all the items in the world
+    Holds all objects in the world.
     """
 
-    items = 0
+    def __init__(self, items=[]):
+        self.items = items
 
-    def add_item():
+    def add_item(self, item):
         """
         Adds item to the world.
         """
+        if item.__class__.__name__ == "Item":
+            self.items.append(item)
 
-    def move_item():
-        """
-        Changes coordinates of an existing item.
-        """
-
-    def gen_world():
-        """
-        Generates a world.
-        """
-    def all_objects():
+    def get_objects(self):
         """
         Returns all objects in the world
         """
+        return self.items
 
-if __name__ == "__main__":
-    window_size = (1000, 1000)
-    background = (255, 255, 255)
-
-    pygame.init()
-    canvas = pygame.display.set_mode(window_size, 0, 32)
-    clock = pygame.time.Clock()
-
-    camera = Camera(init_pos=[0,0,-1], init_angle=[0, 0, 0])
-    renderer = Renderer()
-    world = World()
-
-    while True:
-        print(camera)
-        renderer.draw_scene(world, camera, canvas)
-
-        # camera.pos[0] = camera.pos[0] + 5
-        # camera.pos[1] = camera.pos[1] + 5
-        camera.pos[2] = camera.pos[2] + .005
-        # camera.fov = camera.fov + 1
-        # camera.angle[0] = camera.angle[0] + .4
-
-
-        # print()
-        clock.tick(30)
+# if __name__ == "__main__":
+#     window_size = (1000, 1000)
+#     background = (255, 255, 255)
+#
+#     pygame.init()
+#     canvas = pygame.display.set_mode(window_size, 0, 32)
+#     clock = pygame.time.Clock()
+#
+#     camera = Camera(init_pos=[0,0,-1], init_angle=[0, 0, 0])
+#     renderer = Renderer()
+#     world = World()
+#
+#     while True:
+#         print(camera)
+#         renderer.draw_scene(world, camera, canvas)
+#
+#         # camera.pos[0] = camera.pos[0] + 5
+#         # camera.pos[1] = camera.pos[1] + 5
+#         camera.pos[2] = camera.pos[2] + .005
+#         # camera.fov = camera.fov + 1
+#         # camera.angle[0] = camera.angle[0] + .4
+#
+#
+#         # print()
+#         clock.tick(30)
