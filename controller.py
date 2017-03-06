@@ -6,21 +6,22 @@ import sys
 
 
 class Scene:
-    def __init__(self, ):
+    def __init__(self, window_size=(1000, 1000)):
         """
         Initializes a new scene.  By default, puts one object in and sets up everything in the correct positions.
         """
+        self.window_size = window_size
         self.world = World([Item('Cylinder.stl', (0, .5, 0), (0, 0, 0), 1)])
         self.camera = Camera(init_pos=[0, 1, 0], init_angle=[0, 0, 0], init_fov=.25)
-        self.renderer = Renderer()
+        self.renderer = Renderer(self.camera, window_size)
         self.running = False
 
-    def begin_scene(self, window_size=(1000, 1000)):
+    def begin_scene(self):
         """
         Begins the rendering and user input MVC process.
         """
         thread_lock = threading.Lock()
-        canvas = pygame.display.set_mode(window_size, 0, 32)
+        canvas = pygame.display.set_mode(self.window_size, 0, 32)
         pygame.mouse.set_visible(False)
         # pygame.event.set_grab(True)  # Only uncomment this if you're SURE it won't break everything
         render_thread = threading.Thread(target=self.render_cycle, args=(canvas, thread_lock,))
@@ -41,10 +42,8 @@ class Scene:
             lock.acquire()  # Acquire lock, otherwise things get weird
             self.renderer.draw_scene(self.world, self.camera, canvas)
             lock.release()
-            clock.tick(30)  # 30 FPS
-        # except Exception as e:  # If we get an exception, let go of user input to avoid...issues...
-        #     pygame.event.set_grab(False)
-        #     print(str(e))
+            clock.tick(60)  # FPS
+            # print(self.camera.angle)
 
     def handle_user_input(self, lock):
         """
@@ -52,9 +51,9 @@ class Scene:
         """
         event_keys = (pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a)
         keys_pressed = [0, 0, 0, 0]  # The pressed status of the keys
-        mouse_x, mouse_y = pygame.mouse.get_pos()
         on_screen = True
         is_grabbed = True
+        pygame.mouse.set_pos(500, 500)  # Avoids vew jumping on focus gain
 
         while True:
             if self.running:
@@ -115,7 +114,7 @@ class Scene:
         Handles the moving of the camera based on the user input.
         """
         lock.acquire()  # Acquire lock to make sure multithreading things don't get messed up
-        self.camera.rotate(-mouse_d[0], -mouse_d[1], 0, sensitivity=.01)
+        self.camera.rotate(-mouse_d[0], -mouse_d[1], 0, sensitivity=.005)
         self.camera.move((keys[2]-keys[3], 0, -keys[0]+keys[1]), speed=0.00005)
         lock.release()
         pygame.mouse.set_pos(500, 500)
@@ -123,4 +122,4 @@ class Scene:
 
 if __name__ == "__main__":
     new_scene = Scene()
-    new_scene.begin_scene((1000, 1000))
+    new_scene.begin_scene()

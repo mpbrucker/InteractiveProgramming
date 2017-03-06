@@ -1,17 +1,14 @@
 from math import tan, sin, cos, pi, sqrt
+import math
 import numpy as np
 import pygame
 from item import Item
 
+sign = lambda x: math.copysign(1, x)
 
 class Camera:
-    # Position coordinates
-    pos = [0, 0, 0]
-    # Camera orientation. In rad
-    angle = [0, 0, 0]
-    fov = 0
 
-    def __init__(self, init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.5):
+    def __init__(self, init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.5*pi):
         self.pos = init_pos
         self.angle = init_angle
         self.fov = init_fov
@@ -33,6 +30,10 @@ class Camera:
         self.angle[0] += yaw*sensitivity
         self.angle[1] += pitch*sensitivity
         self.angle[2] += roll*sensitivity
+        if self.angle[1] < -pi/2:
+            self.angle[1] = -pi/2
+        if self.angle[1] > pi/2:
+            self.angle[1] = pi/2
 
 
 class Renderer:
@@ -40,42 +41,47 @@ class Renderer:
     The renderer class. Takes the camera, world, and canvas and draws the scene.
     """
 
+    def __init__(self, camera, window_size):
+        self.project_matrix = self.persp_proj_matrix(camera.fov, window_size[0]/window_size[1], 1, 30)
+
     def draw_scene(self, world, camera, canvas):
         """
         Draws the frame and updates the display.
         """
 
+        # print(camera.angle)
         # Reset to white
         background = (255, 255, 255)
         canvas.fill(background)
 
         view_matrix = self.view_matrix(camera)
-        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), .1, 1)
 
+        self.draw_ground(canvas, camera)
         # Draw center point
-        self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2, 1), (0, 200, 0), 6)
-
-        # test_lines = (((0,0,1,1),(1,10,10,1)), ((0,0,1,1),(10,10,10,1)))
-        # for line in test_lines:
-        #     self.draw_line(canvas, self.project_point(line[0], view_matrix, project_matrix, canvas), self.project_point(line[1], view_matrix, project_matrix, canvas), (0, 255, 0), 3)
+        self.draw_point(canvas, (camera.pos[0], camera.pos[1], .01), (0, 200, 0), 6)
 
         for item in world.get_objects():
             for tri in item.world_points:
                 for point in tri:
-                    transformed_point = self.project_point(point, view_matrix, project_matrix, canvas)
-                    self.draw_point(canvas, transformed_point, (125, 0, 0), 6, point)
+                    transformed_point = self.project_point(point, view_matrix, self.project_matrix, canvas)
+                    self.draw_point(canvas, transformed_point, (125, 0, 0), 6)
 
-
-        # for item in world.get_objects():
-        #     for idx, tri in enumerate(item.world_points):
-        #         print("{}/{}".format(idx+1,len(item.world_points)))
-        #         for idx, point in enumerate(tri):
-        #             point2 = tri[(idx+1)%2]
-        #             print(self.project_point(point, view_matrix, project_matrix, canvas))
-        #             print(self.project_point(point2, view_matrix, project_matrix, canvas))
-        #             self.draw_line(canvas, self.project_point(point, view_matrix, project_matrix, canvas), self.project_point(point2, view_matrix, project_matrix, canvas), (0, 255, 0), 3)
+        # test_lines = (((0,1,0,1),(1,0,0,1)),) #, ((0,0,1,1),(10,10,10,1)))
+        # for line in test_lines:
+        #     self.project_line(canvas, line[0], line[1], view_matrix, self.project_matrix, (125, 0, 0), 3)
 
         pygame.display.flip()
+
+    def draw_ground(self, canvas, camera):
+        fov = camera.fov
+        cur_angle = (camera.angle[1]+(fov/2))/fov
+        # print(camera.angle)
+        if cur_angle < 0:
+            cur_angle = 0
+        if cur_angle > 1:
+            cur_angle = 1
+        height = cur_angle*canvas.get_height()
+        pygame.draw.rect(canvas, (120,120,120), (0,canvas.get_height()-height,canvas.get_width(),canvas.get_height()), 0)
 
 
     def project_point(self, point, view_matrix, project_matrix, canvas):
@@ -84,64 +90,135 @@ class Renderer:
             point = np.append(point, [1])
 
         # Project the points to the camera view and then a projection view
+        # print(view_matrix)
+        # print(project_matrix)
 
         # print("point:", point)
         xy = np.dot(point, view_matrix)
         # print("xyV:", xy)
         xy = np.dot(xy, project_matrix)
+        # print("xyP:", xy)
+
 
         # Makes the perspective happen. w is based on z, and adjusts x and y properly
-        # The magic number makes the stretch in z smaller. Tweak to perfection. Can also be fixed in the projection matrix
-        xy = xy/(xy[3]*.02)
-        xy[0] = xy[0] + canvas.get_width() / 2
-        xy[1] = xy[1] + canvas.get_height() / 2
-        # print(xy)
+        if not xy[3] == 0:
+            xy = xy/(xy[3])
+
         return xy
 
-    # def draw_
+    def cull_point(self, point):
+        if -1 < point[0] < 1 and -1 < point[1] < 1 and -1 < point[2] < 1:
+            return point
+        else:
+            return None
 
-    def draw_point(self, canvas, point, color, size=1, orig_coordinates=""):
-        # # Label each point with world coordinates and current coordinates
-        # basicfont = pygame.font.SysFont(None, 12)
-        # text = basicfont.render(str(point) + "\n" + str(orig_coordinates), True, (0, 0, 0), (255, 255, 255))
-        # textrect = text.get_rect()
-        # textrect.centerx = point[0]
-        # textrect.centery = canvas.get_height() - int(point[1]) + 5
-        # canvas.blit(text, textrect)
+    def cull_line(self, point0, point1):
+        point0_c = cull_point(point0)
+        point1_c = cull_point(point1)
 
-        if point[2] > .01 and 0 <= point[0] <= canvas.get_height() and 0 <= point[1] <= canvas.get_width():
-            # print(point)
+        if point0_c and point1_c:
+            return point0, point1
+
+        # If vertical
+        if point0[0] == point1[0]:
+            if -1 < point0[0] < 1:
+                return point0, point1
+
+        # line = lambda x:
+
+
+    def project_line(self, canvas, point0, point1, view_matrix, project_matrix, color, size=1):
+        """
+        Projects and draws a line given world coordinates.
+        """
+
+        try:
+            if len(point0) == 3:
+                point0 = np.append(point0, [1])
+            if len(point1) == 3:
+                point1 = np.append(point1, [1])
+        except:
+            print("Bad points given ({}, {})".format(point0, point1))
+            return
+
+        point0_p = self.project_point(point0, view_matrix, project_matrix, canvas)
+        point1_p = self.project_point(point1, view_matrix, project_matrix, canvas)
+
+        # print(point0_p, point1_p)
+
+        point0_pc, poinp1_pc = cull_line(point0_p, point1_p)
+
+        self.draw_line(canvas, point0_pc, point1_pc, (125, 0, 0), 3)
+
+    def norm_to_canvas_coord(self, canvas, point):
+        return((point[0] * canvas.get_width()) + canvas.get_width()/2, (point[1] * canvas.get_height()) + canvas.get_height()/2)
+
+    def draw_point(self, canvas, point, color, size=1):
+        # print(point)
+        if (-1 <= point[0] <= 1) and (-1 <= point[1] <= 1) and (.01 <= point[2] <= 1):
+            point_canvas = self.norm_to_canvas_coord(canvas, point)
+            # print("Draw:", point_canvas, "Size:", size)
             for i in range(size):
                 for j in range(size):
-                    canvas.set_at((int(point[0]) + i, canvas.get_height() - int(point[1]) + j), color)
+                    canvas.set_at((int(point_canvas[0]) + i, canvas.get_height() - int(point_canvas[1]) + j), color)
 
-
-    def dist(self, point0, point1):
-        return sqrt((point0[0]-point1[0])**2 + (point0[1] - point1[1])**2)
-
-    def middle(self, point0, point1):
-        return [(point1[0] + (point0[0] - point1[0])/2), (point1[1] + (point0[1] - point1[1])/2), (point1[2] + (point0[2] - point1[2])/2), 1]
 
     def draw_line(self, canvas, point0, point1, color, size=1):
         """
         Draw line between two points.
         """
+        x = point0[0]
+        y = point0[1]
+        z = point0[2]
 
-        dist = self.dist(point0, point1)
-        if dist < 2:
+        if int(point0[0]) == int(point1[0]) and int(point0[1]) == int(point1[1]):
+            # print("Single point at {} {} {}".format(x, y, z))
+            self.draw_point(canvas, (int(x), int(y), int(z)), color, 100)
             return
 
-        middle_point = self.middle(point0, point1)
-        if middle_point[2] > 0.01:
-            self.draw_point(canvas, middle_point, color, size)
+        # Vertical line
+        if int(point0[0]) == int(point1[0]):
+            dz = (point1[2] - point0[2]) / (point1[1] - point0[1])
 
-        try:
-            self.draw_line(canvas, point0, middle_point, color, size)
-            self.draw_line(canvas, middle_point, point1, color, size)
-        except RuntimeError:
+            for y in range(int(point0[1]), int(point1[1])):
+                if z > .01:
+                    self.draw_point(canvas, (int(x), int(y), int(z)), color, size)
+                z += dz
             return
 
+        # Horizontal line
+        if int(point0[1]) == int(point1[1]):
+            dz = (point1[2] - point0[2]) / (point1[0] - point0[0])
 
+            for x in range(int(point0[0]), int(point1[0])):
+                if z > .01:
+                    self.draw_point(canvas, (int(x), int(y), int(z)), color, size)
+                z += dz
+            return
+
+        dx = (point1[0] - point0[0]) / (point1[1] - point0[1])
+        dy = (point1[1] - point0[1]) / (point1[0] - point0[0])
+
+
+        if dx > dy:
+            # dz depends on x
+            dz = (point1[2] - point0[2]) / (point1[0] - point0[0])
+
+            for x in range(int(point0[0]), int(point1[0])):
+                print(x, y, z)
+                self.draw_point(canvas, (int(x), int(y), int(z)), color, size)
+                y += dy
+                z += dz
+
+        else:
+            # dz depends on y
+            dz = dz = (point1[2] - point0[2]) / (point1[1] - point0[1])
+
+            for y in range(int(point0[1]), int(point1[1])):
+                print(x, y, z)
+                self.draw_point(canvas, (int(x), int(y), int(z)), color, size)
+                x += dx
+                z += dz
 
 
     def persp_proj_matrix(self, fov, aspect, znear, zfar):
@@ -149,33 +226,11 @@ class Renderer:
         Return a projection matrix for the given parameters
         """
 
-        # # This is probably 'just wrong'
-        # # calculates the 'length' of half of the screen
-        # xymax = znear * tan(fov * pi / 360) # /360 because fov/2 * pi/180
-        # ymin = -xymax
-        # xmin = -xymax
-        #
-        # # adds the two together
-        # width = xymax - xmin
-        # height = xymax - ymin
-        #
-        # depth = zfar - znear
-        # q = -(zfar + znear) / depth
-        # qn = -2 * (zfar * znear) / depth
-        #
-        # w = (2 * znear / width) / aspect
-        # h = 2 * znear / height
-        #
-        # return np.array([[w, 0, 0, 0],
-        #                  [0, h, 0, 0],
-        #                  [0, 0, q, -1],
-        #                  [0, 0, qn, 0]])
-
         # Scale of x axis
-        a = aspect * (1 / tan(fov * .5)) # Degrees to Rad
+        a = aspect * (1 / tan(fov * .5))
 
         # Scale of y axis
-        b = 1 / tan(fov * .5) # Degrees to Rad
+        b = 1 / tan(fov * .5)
 
         # Remaps z to [0,1], for z-index
             # Possible: c = -(zfar + znear) / (zfar - znear)
@@ -215,11 +270,6 @@ class Renderer:
                          [xaxis[1],                     yaxis[1],                   zaxis[1],                0],
                          [xaxis[2],                     yaxis[2],                   zaxis[2],                0],
                          [-np.dot(xaxis, camera.pos),   -np.dot(yaxis, camera.pos), -np.dot(zaxis, camera.pos), 1]])
-
-        # arr = np.array([[xaxis[0], xaxis[1], xaxis[2], -np.dot(xaxis, camera.pos)],
-        #                 [yaxis[0], yaxis[1], yaxis[2], -np.dot(yaxis, camera.pos)],
-        #                 [zaxis[0], zaxis[1], zaxis[2], -np.dot(zaxis, camera.pos)],
-        #                 [       0,        0,        0,                         1 ]])
 
         return arr
 
