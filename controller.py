@@ -114,7 +114,7 @@ class Scene:
         Handles the moving of the camera based on the user input.
         """
         lock.acquire()  # Acquire lock to make sure multithreading things don't get messed up
-        self.camera.rotate(-mouse_d[0], -mouse_d[1], 0, sensitivity=.005)
+        self.camera.rotate(-mouse_d[0], -mouse_d[1], 0, sensitivity=.001)
         self.camera.move((keys[2]-keys[3], 0, -keys[0]+keys[1]), speed=0.00005)
         lock.release()
         pygame.mouse.set_pos(500, 500)

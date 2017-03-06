@@ -146,7 +146,7 @@ class Renderer:
 
         # print(point0_p, point1_p)
 
-        point0_pc, poinp1_pc = cull_line(point0_p, point1_p)
+        point0_pc, point1_pc = cull_line(point0_p, point1_p)
 
         self.draw_line(canvas, point0_pc, point1_pc, (125, 0, 0), 3)
 
@@ -274,49 +274,29 @@ class Renderer:
         return arr
 
 
-class World:
-    """
-    Holds all objects in the world.
-    """
 
-    def __init__(self, items=[]):
-        self.items = items
+if __name__ == "__main__":
+    window_size = (1000, 1000)
+    background = (255, 255, 255)
 
-    def add_item(self, item):
-        """
-        Adds item to the world.
-        """
-        if item.__class__.__name__ == "Item":
-            self.items.append(item)
+    pygame.init()
+    canvas = pygame.display.set_mode(window_size, 0, 32)
+    clock = pygame.time.Clock()
 
-    def get_objects(self):
-        """
-        Returns all objects in the world
-        """
-        return self.items
+    camera = Camera(init_pos=[0,0,-1], init_angle=[0, 0, 0])
+    renderer = Renderer()
+    world = World()
 
-# if __name__ == "__main__":
-#     window_size = (1000, 1000)
-#     background = (255, 255, 255)
-#
-#     pygame.init()
-#     canvas = pygame.display.set_mode(window_size, 0, 32)
-#     clock = pygame.time.Clock()
-#
-#     camera = Camera(init_pos=[0,0,-1], init_angle=[0, 0, 0])
-#     renderer = Renderer()
-#     world = World()
-#
-#     while True:
-#         print(camera)
-#         renderer.draw_scene(world, camera, canvas)
-#
-#         # camera.pos[0] = camera.pos[0] + 5
-#         # camera.pos[1] = camera.pos[1] + 5
-#         camera.pos[2] = camera.pos[2] + .005
-#         # camera.fov = camera.fov + 1
-#         # camera.angle[0] = camera.angle[0] + .4
-#
-#
-#         # print()
-#         clock.tick(30)
+    while True:
+        print(camera)
+        renderer.draw_scene(world, camera, canvas)
+
+        # camera.pos[0] = camera.pos[0] + 5
+        # camera.pos[1] = camera.pos[1] + 5
+        camera.pos[2] = camera.pos[2] + .005
+        # camera.fov = camera.fov + 1
+        # camera.angle[0] = camera.angle[0] + .4
+
+
+        # print()
+        clock.tick(30)
