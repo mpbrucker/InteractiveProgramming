@@ -12,7 +12,7 @@ class Camera:
     angle = [0, 0, 0]
     fov = 0
 
-    def __init__(self, init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.5):
+    def __init__(self, init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.5*pi):
         self.pos = init_pos
         self.angle = init_angle
         self.fov = init_fov
@@ -34,6 +34,8 @@ class Renderer:
     """
     The renderer class. Takes the camera, world, and canvas and draws the scene.
     """
+    def __init__(self, camera):
+        self.project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), 1, 30)
 
     def draw_scene(self, world, camera, canvas):
         """
@@ -49,14 +51,14 @@ class Renderer:
         canvas.fill(background)
 
         view_matrix = self.view_matrix(camera)
-        project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), .1, 1)
+
 
         # Draw center point
         self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2, 1), (0, 200, 0), 6)
 
         test_lines = (((0,1,0,1),(1,0,0,1)),) #, ((0,0,1,1),(10,10,10,1)))
         for line in test_lines:
-            self.project_line(canvas, line[0], line[1], view_matrix, project_matrix, (125, 0, 0), 3)
+            self.project_line(canvas, line[0], line[1], view_matrix, self.project_matrix, (125, 0, 0), 3)
 
         # for tri in item.world_points:
         #     print(tri)
@@ -199,10 +201,10 @@ class Renderer:
         """
 
         # Scale of x axis
-        a = aspect * (1 / tan(fov * .5)) # Degrees to Rad
+        a = aspect * (1 / tan(fov * .5))
 
         # Scale of y axis
-        b = 1 / tan(fov * .5) # Degrees to Rad
+        b = 1 / tan(fov * .5)
 
         # Remaps z to [0,1], for z-index
             # Possible: c = -(zfar + znear) / (zfar - znear)
@@ -213,7 +215,7 @@ class Renderer:
         # Maps w to z *
             # TODO: Figure out why this is wrong.
             # Possible: e = -2 * (zfar * znear) / (zfar - znear)
-        e = (znear * zfar) / (zfar - znear)
+        e = -(znear * zfar) / (zfar - znear)
 
 
         return np.array([[a, 0, 0, 0],

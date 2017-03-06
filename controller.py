@@ -11,8 +11,8 @@ class Scene:
         Initializes a new scene.  By default, puts one object in and sets up everything in the correct positions.
         """
         self.world = World()
-        self.camera = Camera(init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.25)
-        self.renderer = Renderer()
+        self.camera = Camera(init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.5*3.14)
+        self.renderer = Renderer(self.camera)
         self.running = True
 
     def begin_scene(self, window_size=(1000, 1000)):
@@ -39,7 +39,7 @@ class Scene:
             lock.acquire()
             self.renderer.draw_scene(self.world, self.camera, canvas)
             lock.release()
-            clock.tick(10)  # 30 FPS
+            clock.tick(10)  # FPS
 
     def get_user_input(self, lock):
         """
