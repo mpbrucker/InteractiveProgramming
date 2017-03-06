@@ -1,4 +1,5 @@
 from math import tan, sin, cos, pi, sqrt
+from world import World
 import math
 import numpy as np
 import pygame
@@ -42,7 +43,7 @@ class Renderer:
     """
 
     def __init__(self, camera, window_size=(1000,1000)):
-        self.project_matrix = self.persp_proj_matrix(camera.fov, window_size[0]/window_size[1], 1, 300)
+        self.project_matrix = self.persp_proj_matrix(camera.fov, window_size[0]/window_size[1], 0.01, 100)
 
     def draw_scene(self, world, camera, canvas):
         """
@@ -59,21 +60,20 @@ class Renderer:
         self.draw_ground(canvas, camera)
 
         # Draw center point
-        self.draw_point(canvas, (0, 0, 1), (0, 200, 0), 6)
 
         for item in world.get_objects():
             for tri in item.world_points:
                 # print("Tri:", tri)
-                self.project_line(canvas, tri[0], tri[1], view_matrix, self.project_matrix, (125, 0, 0))
+                # self.project_line(canvas, tri[0], tri[1], view_matrix, self.project_matrix, (125, 0, 0))
 
-                # for point in tri:
-                #     transformed_point = self.project_point(point, view_matrix, self.project_matrix, canvas)
-                #     self.draw_point(canvas, transformed_point, (125, 0, 0), 6)
+                for point in tri:
+                    transformed_point = self.project_point(point, view_matrix, self.project_matrix, canvas)
+                    self.draw_point(canvas, transformed_point, (125, 0, 0), 6)
 
         # test_lines = (((0,1,0,1),(1,0,0,1)),) #, ((0,0,1,1),(10,10,10,1)))
         # for line in test_lines:
         #     self.project_line(canvas, line[0], line[1], view_matrix, self.project_matrix, (125, 0, 0), 3)
-
+        self.draw_point(canvas, (0,0, .01), (0, 200, 0), 6)
         pygame.display.flip()
 
     def draw_ground(self, canvas, camera):
@@ -311,26 +311,7 @@ class Renderer:
         return arr
 
 
-class World:
-    """
-    Holds all objects in the world.
-    """
 
-    def __init__(self, items=[]):
-        self.items = items
-
-    def add_item(self, item):
-        """
-        Adds item to the world.
-        """
-        if item.__class__.__name__ == "Item":
-            self.items.append(item)
-
-    def get_objects(self):
-        """
-        Returns all objects in the world
-        """
-        return self.items
 
 if __name__ == "__main__":
     window_size = (1000, 1000)
