@@ -95,14 +95,17 @@ class Renderer:
 
         # Makes the perspective happen. w is based on z, and adjusts x and y properly
         # The magic number makes the stretch in z smaller. Tweak to perfection. Can also be fixed in the projection matrix
-        xy = xy/(xy[3]*.02)
+        # TODO: removed magic number (xy[3] * .02), might need to put it back
+        if not xy[3] == 0:
+            xy = xy/(xy[3])
 
-        if (xy[0] > 1 or xy[0] < -1) or (xy[1] > 1 or xy[1] < -1) or (xy[2] > 1 or xy[2] < -1):
-            # TODO: Clip here if -w < (x, y, z) < w
-            return (0,0,0,1)
+        # if (xy[0] > 1 or xy[0] < -1) or (xy[1] > 1 or xy[1] < -1) or (xy[2] > 1 or xy[2] < -1):
+        #     # TODO: Clip here if -w < (x, y, z) < w
+        #     return (0,0,0,1)
 
-        xy[0] = xy[0] + canvas.get_width() / 2
-        xy[1] = xy[1] + canvas.get_height() / 2
+        # xy[0] = xy[0] + canvas.get_width() / 2
+        # xy[1] = xy[1] + canvas.get_height() / 2
+
         # print(xy)
         return xy
 
@@ -120,14 +123,12 @@ class Renderer:
             print("Bad points given ({}, {})".format(point0, point1))
             return
 
-        point0_view = np.dot(point0, view_matrix)
-        point1_view = np.dot(point1, view_matrix)
+        point0_p = self.project_point(point0, view_matrix, project_matrix, canvas)
+        point1_p = self.project_point(point1, view_matrix, project_matrix, canvas)
 
-        # Culling if both points < 0
-        if point0_view[2] < 0 and point1_view[2] < 0:
-            return
+        print(point0_p, point1_p)
 
-        self.draw_line(canvas, self.project_point(point0, view_matrix, project_matrix, canvas), self.project_point(point1, view_matrix, project_matrix, canvas), (125, 0, 0), 3)
+        self.draw_line(canvas, point0_p, point1_p, (125, 0, 0), 3)
 
     def draw_point(self, canvas, point, color, size=1, orig_coordinates=""):
         # print(point)
