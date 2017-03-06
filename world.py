@@ -22,7 +22,7 @@ class World:
         """
         return self.items
 
-    def gen_random_scene(self, min_val, max_val):
-        objects = ['Cylinder.stl']
-        for x in range(min_val, max_val):
-            self.add_item(Item(choice(objects), (uniform(0,10), uniform(0,10), uniform(0,1)), (0,0,0), uniform(0.5, 5), color=(randint(0,255),randint(0,255), randint(0,255)))
+    # def gen_random_scene(self, min_val, max_val):
+    #     objects = ['Cylinder.stl']
+    #     for x in range(min_val, max_val):
+    #         self.add_item(Item(choice(objects), (uniform(0,10), uniform(0,10), uniform(0,1)), (0,0,0), uniform(0.5, 5), color=(randint(0,255),randint(0,255), randint(0,255)))

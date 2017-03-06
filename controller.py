@@ -12,7 +12,7 @@ class Scene:
         """
         self.window_size = window_size
         self.world = World([Item('Cylinder.stl', (0, .5, 0), (0, 0, 0), 1)])
-        self.camera = Camera(init_pos=[0, 1, 0], init_angle=[0, 0, 0], init_fov=.25)
+        self.camera = Camera(init_pos=[0, 1, -10], init_angle=[0, 0, 0], init_fov=1.57)
         self.renderer = Renderer(self.camera, window_size)
         self.running = False
 
@@ -96,6 +96,7 @@ class Scene:
                                 pygame.event.set_grab(False)
                                 is_grabbed = False
                                 pygame.mouse.set_visible(True)
+
                         if event.type == pygame.QUIT:
                             self.running = False
                             print("Quitting...")
@@ -114,8 +115,8 @@ class Scene:
         Handles the moving of the camera based on the user input.
         """
         lock.acquire()  # Acquire lock to make sure multithreading things don't get messed up
-        self.camera.rotate(-mouse_d[0], -mouse_d[1], 0, sensitivity=.001)
-        self.camera.move((keys[2]-keys[3], 0, -keys[0]+keys[1]), speed=0.00005)
+        self.camera.rotate(mouse_d[0], -mouse_d[1], 0, sensitivity=.001)
+        self.camera.move((keys[2]-keys[3], 0, keys[0]-keys[1]), speed=0.0001)
         lock.release()
         pygame.mouse.set_pos(500, 500)
 
