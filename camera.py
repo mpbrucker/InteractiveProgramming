@@ -1,9 +1,10 @@
 from math import tan, sin, cos, pi, sqrt
+import math
 import numpy as np
 import pygame
 from item import *
 
-
+sign = lambda x: math.copysign(1, x)
 class Camera:
     # Position coordinates
     pos = [0, 0, 0]
@@ -78,6 +79,10 @@ class Renderer:
 
         # print("point:", point)
         xy = np.dot(point, view_matrix)
+        if xy[2] <= 0:
+            raise(ValueError("Z is 0 or less!", xy))
+            return (1,1,1,1)
+
         # print("xyV:", xy)
         xy = np.dot(xy, project_matrix)
         # print("xyP:", xy)
@@ -91,6 +96,28 @@ class Renderer:
         # print(xy)
         return xy
 
+    def project_line(self, canvas, point0, point1, view_matrix, project_matrix, color, size=1):
+        """
+        Projects and draws a line given world coordinates.
+        """
+
+        try:
+            if len(point0) == 3:
+                point0 = np.append(point0, [1])
+            if len(point1) == 3:
+                point1 = np.append(point1, [1])
+        except:
+            print("Bad points given ({}, {})".format(point0, point1))
+            return
+
+        point0_view = np.dot(point0, view_matrix)
+        point1_view = np.dot(point1, view_matrix)
+
+        # Culling if both points < 0
+        if point0_view[2] < 0 and point1_view[2] < 0:
+            return
+
+        self.draw_line(canvas, self.project_point(point0, view_matrix, project_matrix, canvas), self.project_point(point1, view_matrix, project_matrix, canvas), (125, 0, 0), 3)
 
     def draw_point(self, canvas, point, color, size=1, orig_coordinates=""):
         # print(point)
