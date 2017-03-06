@@ -2,16 +2,11 @@ from math import tan, sin, cos, pi, sqrt
 import math
 import numpy as np
 import pygame
-from item import *
+from item import Item
 
 sign = lambda x: math.copysign(1, x)
 
 class Camera:
-    # Position coordinates
-    pos = [0, 0, 0]
-    # Camera orientation. In rad
-    angle = [0, 0, 0]
-    fov = 0
 
     def __init__(self, init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.5*pi):
         self.pos = init_pos
@@ -22,13 +17,23 @@ class Camera:
         return "Camera object at: {}, {}, {}. Angles: {}, {}, {}. Fov: {}".format(self.pos[0], self.pos[1], self.pos[2], self.angle[0], self.angle[1], self.angle[2], self.fov)
 
     def move(self, movement, speed=0.0001):
+        """
+        Moves the position of the camera object along the x and z axes
+        """
         self.pos[0] += (movement[0]*speed*cos(self.angle[0]))+(movement[2]*speed*sin(self.angle[0]))
         self.pos[2] += (movement[0]*speed*sin(-self.angle[0]))+(movement[2]*speed*cos(self.angle[0]))
 
     def rotate(self, yaw, pitch, roll, sensitivity=.1):
+        """
+        Rotates the orientation matrix of the camera
+        """
         self.angle[0] += yaw*sensitivity
         self.angle[1] += pitch*sensitivity
         self.angle[2] += roll*sensitivity
+        if self.angle[1] < -pi/2:
+            self.angle[1] = -pi/2
+        if self.angle[1] > pi/2:
+            self.angle[1] = pi/2
 
 
 class Renderer:
@@ -44,30 +49,40 @@ class Renderer:
         Draws the frame and updates the display.
         """
 
-        # TODO: Use world items
-        # item = Item('cube2.stl', (0, 0, 0), (0, 0, 0), 1)
-
+        # print(camera.angle)
         # Reset to white
         background = (255, 255, 255)
         canvas.fill(background)
 
         view_matrix = self.view_matrix(camera)
 
-
+        self.draw_ground(canvas, camera)
+	
         # Draw center point
-        self.draw_point(canvas, (0, 0, .01), (0, 200, 0), 6)
+        self.draw_point(canvas, (camera.pos[0], camera.pos[1], .01), (0, 200, 0), 6)
 
-        test_lines = (((0,1,0,1),(1,0,0,1)),) #, ((0,0,1,1),(10,10,10,1)))
-        for line in test_lines:
-            self.project_line(canvas, line[0], line[1], view_matrix, self.project_matrix, (125, 0, 0), 3)
+        for item in world.get_objects():
+            for tri in item.world_points:
+                for point in tri:
+                    transformed_point = self.project_point(point, view_matrix, self.project_matrix, canvas)
+                    self.draw_point(canvas, transformed_point, (125, 0, 0), 6)
 
-        # for tri in item.world_points:
-        #     print(tri)
-        #     self.project_line(canvas, tri[0], tri[1], view_matrix, project_matrix, (125, 0, 0), 3)
-        #     self.project_line(canvas, tri[1], tri[2], view_matrix, project_matrix, (125, 0, 0), 3)
-        #     self.project_line(canvas, tri[2], tri[0], view_matrix, project_matrix, (125, 0, 0), 3)
+        # test_lines = (((0,1,0,1),(1,0,0,1)),) #, ((0,0,1,1),(10,10,10,1)))
+        # for line in test_lines:
+        #     self.project_line(canvas, line[0], line[1], view_matrix, self.project_matrix, (125, 0, 0), 3)
 
         pygame.display.flip()
+
+    def draw_ground(self, canvas, camera):
+        fov = camera.fov
+        cur_angle = (camera.angle[1]+(fov/2))/fov
+        # print(camera.angle)
+        if cur_angle < 0:
+            cur_angle = 0
+        if cur_angle > 1:
+            cur_angle = 1
+        height = cur_angle*canvas.get_height()
+        pygame.draw.rect(canvas, (120,120,120), (0,canvas.get_height()-height,canvas.get_width(),canvas.get_height()), 0)
 
 
     def project_point(self, point, view_matrix, project_matrix, canvas):
@@ -76,14 +91,14 @@ class Renderer:
             point = np.append(point, [1])
 
         # Project the points to the camera view and then a projection view
-        print(view_matrix)
-        print(project_matrix)
+        # print(view_matrix)
+        # print(project_matrix)
 
-        print("point:", point)
+        # print("point:", point)
         xy = np.dot(point, view_matrix)
-        print("xyV:", xy)
+        # print("xyV:", xy)
         xy = np.dot(xy, project_matrix)
-        print("xyP:", xy)
+        # print("xyP:", xy)
 
 
         # Makes the perspective happen. w is based on z, and adjusts x and y properly
@@ -284,29 +299,24 @@ class Renderer:
 
 class World:
     """
-    Holds all the items in the world
+    Holds all objects in the world.
     """
 
-    items = 0
+    def __init__(self, items=[]):
+        self.items = items
 
-    def add_item():
+    def add_item(self, item):
         """
         Adds item to the world.
         """
+        if item.__class__.__name__ == "Item":
+            self.items.append(item)
 
-    def move_item():
-        """
-        Changes coordinates of an existing item.
-        """
-
-    def gen_world():
-        """
-        Generates a world.
-        """
-    def all_objects():
+    def get_objects(self):
         """
         Returns all objects in the world
         """
+        return self.items
 
 if __name__ == "__main__":
     window_size = (1000, 1000)

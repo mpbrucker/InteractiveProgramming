@@ -39,7 +39,7 @@ class Item():
         # Combines the translation and rotation matrices
         transform = self.get_translation_matrix(coords).dot(self.get_rotation_matrix(orientation).dot(self.get_scale_matrix(scale)))
         new_points = np.zeros(points.shape)  # The matrix of transformed points
-        new_points = [np.array([transform.dot(np.append(point, [1]))[0:3] for point in triangle]) for triangle in points]
+        new_points = [np.array([transform.dot(np.append(point, [1])) for point in triangle]) for triangle in points]
         return new_points
 
     def get_scale_matrix(self, scale):

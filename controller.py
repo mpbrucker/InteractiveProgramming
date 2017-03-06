@@ -1,5 +1,5 @@
-from camera import *
-from item import *
+from camera import World, Camera, Renderer
+from item import Item
 import pygame
 import threading
 import sys
@@ -10,24 +10,24 @@ class Scene:
         """
         Initializes a new scene.  By default, puts one object in and sets up everything in the correct positions.
         """
-        self.world = World()
-        self.camera = Camera(init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.5*3.14)
         self.window_size = window_size
-        self.renderer = Renderer(self.camera, self.window_size)
-        self.running = True
+        self.world = World([Item('Cylinder.stl', (0, .5, 0), (0, 0, 0), 1)])
+        self.camera = Camera(init_pos=[0, 1, 0], init_angle=[0, 0, 0], init_fov=.25)
+        self.renderer = Renderer(self.camera, window_size)
+        self.running = False
 
-    def begin_scene(self, ):
+    def begin_scene(self):
         """
         Begins the rendering and user input MVC process.
         """
         thread_lock = threading.Lock()
         canvas = pygame.display.set_mode(self.window_size, 0, 32)
         pygame.mouse.set_visible(False)
-        pygame.event.set_grab(True)  # Only uncomment this if you're SURE it won't break everything
-        render_thread = threading.Thread(target=self.render_cycle, args=(canvas,thread_lock,))
+        # pygame.event.set_grab(True)  # Only uncomment this if you're SURE it won't break everything
+        render_thread = threading.Thread(target=self.render_cycle, args=(canvas, thread_lock,))
         render_thread.start()
 
-        input_thread = threading.Thread(target=self.get_user_input, args=(thread_lock,))
+        input_thread = threading.Thread(target=self.handle_user_input, args=(thread_lock,))
         input_thread.start()
 
     def render_cycle(self, canvas, lock):
@@ -36,82 +36,88 @@ class Scene:
         """
         pygame.init()
         clock = pygame.time.Clock()
+        self.running = True
+        # try:
         while self.running:
-            lock.acquire()
+            lock.acquire()  # Acquire lock, otherwise things get weird
             self.renderer.draw_scene(self.world, self.camera, canvas)
             lock.release()
-            clock.tick(10)  # FPS
+            clock.tick(60)  # FPS
+            # print(self.camera.angle)
 
-    def get_user_input(self, lock):
+    def handle_user_input(self, lock):
         """
         Gets the input from the user.
         """
-
         event_keys = (pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a)
         keys_pressed = [0, 0, 0, 0]  # The pressed status of the keys
-        mouse_x, mouse_y = pygame.mouse.get_pos()
         on_screen = True
         is_grabbed = True
+        pygame.mouse.set_pos(500, 500)  # Avoids vew jumping on focus gain
 
+        while True:
+            if self.running:
+                try:  # Exception handling so that we can let go of inputs if need be
 
-        while self.running:
-            events = pygame.event.get()
+                    # Gets input from keyboard/mouse, and updates camera based on it
+                    events = pygame.event.get()
+                    down_keys = [event.key for event in events if event.type == pygame.KEYDOWN]
+                    up_keys = [event.key for event in events if event.type == pygame.KEYUP]
+                    for idx in range(4):
+                        keys_pressed[idx] += int(event_keys[idx] in down_keys) - int(event_keys[idx] in up_keys)
 
-            for event in events:
-                if event.type == pygame.QUIT:
-                    self.running = False
-                    print("Quitting...")
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    mouse_d = [mouse_x-500, 500-mouse_y]
 
-            # Jesus take the wheel, hope this doesn't break everything
+                    if is_grabbed:
+                        self.update_camera(keys_pressed, mouse_d, lock)
 
-            down_keys = [event.key for event in events if event.type == pygame.KEYDOWN]
-            up_keys = [event.key for event in events if event.type == pygame.KEYUP]
-            for idx in range(4):
-                keys_pressed[idx] += int(event_keys[idx] in down_keys) - int(event_keys[idx] in up_keys)
-            self.camera.move((keys_pressed[2]-keys_pressed[3], 0, keys_pressed[0]-keys_pressed[1]), speed=0.0001)
+                    # This block handles updating of window focus
+                    try:
+                        focus_status = [event for event in events if event.type == pygame.ACTIVEEVENT][0]
+                        if focus_status.gain == 1:
+                            on_screen = True  # If focus on window is regained
+                        else:
+                            is_grabbed = False
+                            on_screen = False
+                    except IndexError:
+                        pass
 
-            # This block avoids massive leaps in the camera position when regaining focus
-            try:
-                focus_status = [event for event in events if event.type == pygame.ACTIVEEVENT][0]
-                if focus_status.gain == 1:
-                    on_screen = True
-                else:
-                    is_grabbed = False
-                    on_screen = False
-            except IndexError:
-                pass
+                    # If the screen is grabbed, update vars/move the mouse
+                    if on_screen and pygame.mouse.get_pressed()[0] and not is_grabbed:
+                        is_grabbed = True
+                        pygame.event.set_grab(True)
+                        pygame.mouse.set_visible(False)
+                        pygame.mouse.set_pos(500, 500)  # Avoids vew jumping on focus gain
 
-            if on_screen and pygame.mouse.get_pressed()[0] and not is_grabbed:
-                is_grabbed = True
-                pygame.event.set_grab(True)
-                pygame.mouse.set_visible(False)
+                    for event in events:
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_q:  # If Q is pressed, let go of inputs
+                                pygame.event.set_grab(False)
+                                is_grabbed = False
+                                pygame.mouse.set_visible(True)
+                        if event.type == pygame.QUIT:
+                            self.running = False
+                            print("Quitting...")
+                            break
 
-            for event in events:
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:
-                        pygame.event.set_grab(False)
-                        is_grabbed = False
-                        pygame.mouse.set_visible(True)
-
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            mouse_d = [mouse_x-500, 500-mouse_y]
-            if is_grabbed:
-                lock.acquire()
-                # self.camera.rotate(mouse_d[0], -mouse_d[1], 0, sensitivity=.01)
-                lock.release()
-                pygame.mouse.set_pos(500, 500)
-
-
-            # print(self.camera)
+                except Exception as e:
+                    pygame.event.set_grab(False)
+                    print(str(e))
 
         # On quit, gracefully exit
         pygame.quit()
         sys.exit()
 
-    def update_camera(self):
+    def update_camera(self, keys, mouse_d, lock):
         """
         Handles the moving of the camera based on the user input.
         """
+        lock.acquire()  # Acquire lock to make sure multithreading things don't get messed up
+        self.camera.rotate(-mouse_d[0], -mouse_d[1], 0, sensitivity=.005)
+        self.camera.move((keys[2]-keys[3], 0, -keys[0]+keys[1]), speed=0.00005)
+        lock.release()
+        pygame.mouse.set_pos(500, 500)
 
 
 if __name__ == "__main__":
