@@ -84,17 +84,19 @@ class Renderer:
 
         # print("point:", point)
         xy = np.dot(point, view_matrix)
-        if xy[2] <= 0:
-            raise(ValueError("Z is 0 or less!", xy))
-            return (1,1,1,1)
 
         # print("xyV:", xy)
         xy = np.dot(xy, project_matrix)
-        # print("xyP:", xy)
+        print("xyP:", xy)
+
 
         # Makes the perspective happen. w is based on z, and adjusts x and y properly
         # The magic number makes the stretch in z smaller. Tweak to perfection. Can also be fixed in the projection matrix
         xy = xy/(xy[3]*.02)
+
+        if (xy[0] > 1 or xy[0] < -1) or (xy[1] > 1 or xy[1] < -1) or (xy[2] > 1 or xy[2] < -1):
+            # TODO: Clip here if -w < (x, y, z) < w
+            return (0,0,0,1)
 
         xy[0] = xy[0] + canvas.get_width() / 2
         xy[1] = xy[1] + canvas.get_height() / 2
@@ -136,22 +138,40 @@ class Renderer:
         """
         Draw line between two points.
         """
+        x = point0[0]
+        y = point0[1]
+        z = point0[2]
+
+        if int(point0[0]) == int(point1[0]) and int(point0[1]) == int(point1[1]):
+            print("Single point at {} {} {}".format(x, y, z))
+            self.draw_point(canvas, (int(x), int(y), int(z)), color, 100)
+            return
 
         # Vertical line
         if int(point0[0]) == int(point1[0]):
             dz = (point1[2] - point0[2]) / (point1[1] - point0[1])
-            z = point0[2]
+
             for y in range(int(point0[1]), int(point1[1])):
                 if z > .01:
-                    self.draw_point(canvas, (int(point0[0]), y, int(z)), color, size)
+                    self.draw_point(canvas, (int(x), int(y), int(z)), color, size)
                 z += dz
+            return
+
+        # Horizontal line
+        if int(point0[1]) == int(point1[1]):
+            dz = (point1[2] - point0[2]) / (point1[0] - point0[0])
+
+            for x in range(int(point0[0]), int(point1[0])):
+                if z > .01:
+                    self.draw_point(canvas, (int(x), int(y), int(z)), color, size)
+                z += dz
+            return
 
         dx = (point1[0] - point0[0]) / (point1[1] - point0[1])
         dy = (point1[1] - point0[1]) / (point1[0] - point0[0])
 
 
-        y = point0[1]
-        z = point0[2]
+
 
 
         if dx > dy:
@@ -174,47 +194,11 @@ class Renderer:
                 x += dx
                 z += dz
 
-        # dist = self.dist(point0, point1)
-        #
-        #
-        # if dist < 2:
-        #     return
-        #
-        # middle_point = self.middle(point0, point1)
-        # self.draw_point(canvas, middle_point, color, size)
-        #
-        # self.draw_line(canvas, point0, middle_point, color, size)
-        # self.draw_line(canvas, middle_point, point1, color, size)
-
-
-
 
     def persp_proj_matrix(self, fov, aspect, znear, zfar):
         """
         Return a projection matrix for the given parameters
         """
-
-        # # This is probably 'just wrong'
-        # # calculates the 'length' of half of the screen
-        # xymax = znear * tan(fov * pi / 360) # /360 because fov/2 * pi/180
-        # ymin = -xymax
-        # xmin = -xymax
-        #
-        # # adds the two together
-        # width = xymax - xmin
-        # height = xymax - ymin
-        #
-        # depth = zfar - znear
-        # q = -(zfar + znear) / depth
-        # qn = -2 * (zfar * znear) / depth
-        #
-        # w = (2 * znear / width) / aspect
-        # h = 2 * znear / height
-        #
-        # return np.array([[w, 0, 0, 0],
-        #                  [0, h, 0, 0],
-        #                  [0, 0, q, -1],
-        #                  [0, 0, qn, 0]])
 
         # Scale of x axis
         a = aspect * (1 / tan(fov * .5)) # Degrees to Rad
@@ -231,7 +215,7 @@ class Renderer:
         # Maps w to z *
             # TODO: Figure out why this is wrong.
             # Possible: e = -2 * (zfar * znear) / (zfar - znear)
-        e = -(znear * zfar) / (zfar - znear)
+        e = (znear * zfar) / (zfar - znear)
 
 
         return np.array([[a, 0, 0, 0],
