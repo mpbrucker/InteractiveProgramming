@@ -34,7 +34,8 @@ class Renderer:
     """
     The renderer class. Takes the camera, world, and canvas and draws the scene.
     """
-    def __init__(self, window_size):
+
+    def __init__(self, camera, window_size):
         self.project_matrix = self.persp_proj_matrix(camera.fov, window_size[0]/window_size[1], 1, 30)
 
     def draw_scene(self, world, camera, canvas):
@@ -42,9 +43,8 @@ class Renderer:
         Draws the frame and updates the display.
         """
 
-
         # TODO: Use world items
-        item = Item('cube2.stl', (0, 0, 0), (0, 0, 0), 1)
+        # item = Item('cube2.stl', (0, 0, 0), (0, 0, 0), 1)
 
         # Reset to white
         background = (255, 255, 255)
@@ -54,7 +54,7 @@ class Renderer:
 
 
         # Draw center point
-        self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2, 1), (0, 200, 0), 6)
+        self.draw_point(canvas, (0, 0, .01), (0, 200, 0), 6)
 
         test_lines = (((0,1,0,1),(1,0,0,1)),) #, ((0,0,1,1),(10,10,10,1)))
         for line in test_lines:
@@ -64,15 +64,7 @@ class Renderer:
         #     print(tri)
         #     self.project_line(canvas, tri[0], tri[1], view_matrix, project_matrix, (125, 0, 0), 3)
         #     self.project_line(canvas, tri[1], tri[2], view_matrix, project_matrix, (125, 0, 0), 3)
-
-        # for tri in item.world_points:
-        #     for point in tri:
-        #         point_view = np.dot(np.append(point, [1]), view_matrix)
-        #
-        #         # Cull points behind camera
-        #         if point_view[2] > 0.01:
-        #             self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6, point)
-
+        #     self.project_line(canvas, tri[2], tri[0], view_matrix, project_matrix, (125, 0, 0), 3)
 
         pygame.display.flip()
 
@@ -87,29 +79,38 @@ class Renderer:
         print(project_matrix)
 
         print("point:", point)
-        #xy = view_matrix * point
         xy = np.dot(point, view_matrix)
-
         print("xyV:", xy)
         xy = np.dot(xy, project_matrix)
         print("xyP:", xy)
 
 
         # Makes the perspective happen. w is based on z, and adjusts x and y properly
-        # The magic number makes the stretch in z smaller. Tweak to perfection. Can also be fixed in the projection matrix
-        # TODO: removed magic number (xy[3] * .02), might need to put it back
         if not xy[3] == 0:
             xy = xy/(xy[3])
 
-        # if (xy[0] > 1 or xy[0] < -1) or (xy[1] > 1 or xy[1] < -1) or (xy[2] > 1 or xy[2] < -1):
-        #     # TODO: Clip here if -w < (x, y, z) < w
-        #     return (0,0,0,1)
-
-        # xy[0] = xy[0] + canvas.get_width() / 2
-        # xy[1] = xy[1] + canvas.get_height() / 2
-
-        # print(xy)
         return xy
+
+    def cull_point(self, point):
+        if -1 < point[0] < 1 and -1 < point[1] < 1 and -1 < point[2] < 1:
+            return point
+        else:
+            return None
+
+    def cull_line(self, point0, point1):
+        point0_c = cull_point(point0)
+        point1_c = cull_point(point1)
+
+        if point0_c and point1_c:
+            return point0, point1
+
+        # If vertical
+        if point0[0] == point1[0]:
+            if -1 < point0[0] < 1:
+                return point0, point1
+
+        line = lambda x:
+
 
     def project_line(self, canvas, point0, point1, view_matrix, project_matrix, color, size=1):
         """
@@ -130,14 +131,21 @@ class Renderer:
 
         print(point0_p, point1_p)
 
-        self.draw_line(canvas, point0_p, point1_p, (125, 0, 0), 3)
+        point0_pc, poinp1_pc = cull_line(point0_p, point1_p)
 
-    def draw_point(self, canvas, point, color, size=1, orig_coordinates=""):
+        self.draw_line(canvas, point0_pc, point1_pc, (125, 0, 0), 3)
+
+    def norm_to_canvas_coord(self, canvas, point):
+        return((point[0] * canvas.get_width()) + canvas.get_width()/2, (point[1] * canvas.get_height()) + canvas.get_height()/2)
+
+    def draw_point(self, canvas, point, color, size=1):
         # print(point)
-        if point[2] > .01:
+        if (-1 <= point[0] <= 1) and (-1 <= point[1] <= 1) and (.01 <= point[2] <= 1):
+            point_canvas = self.norm_to_canvas_coord(canvas, point)
+            print("Draw:", point_canvas, "Size:", size)
             for i in range(size):
                 for j in range(size):
-                    canvas.set_at((int(point[0]) + i, canvas.get_height() - int(point[1]) + j), color)
+                    canvas.set_at((int(point_canvas[0]) + i, canvas.get_height() - int(point_canvas[1]) + j), color)
 
 
     def draw_line(self, canvas, point0, point1, color, size=1):

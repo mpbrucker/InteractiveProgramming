@@ -116,4 +116,4 @@ class Scene:
 
 if __name__ == "__main__":
     new_scene = Scene()
-    new_scene.begin_scene((1000, 1000))
+    new_scene.begin_scene()
