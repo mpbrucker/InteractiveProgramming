@@ -12,7 +12,7 @@ class Scene:
         """
         self.window_size = window_size
         self.world = World([Item('Cylinder.stl', (0, .5, 0), (0, 0, 0), 1)])
-        self.camera = Camera(init_pos=[0, 0, -10], init_angle=[0, 0, 0], init_fov=.25)
+        self.camera = Camera(init_pos=[0, 0, -3], init_angle=[0, 0, 0], init_fov=.5 * 3.1)
         self.renderer = Renderer(self.camera, window_size)
         self.running = False
 
