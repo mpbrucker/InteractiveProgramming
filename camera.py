@@ -34,8 +34,8 @@ class Renderer:
     """
     The renderer class. Takes the camera, world, and canvas and draws the scene.
     """
-    def __init__(self, camera):
-        self.project_matrix = self.persp_proj_matrix(camera.fov, canvas.get_width()/canvas.get_height(), 1, 30)
+    def __init__(self, window_size):
+        self.project_matrix = self.persp_proj_matrix(camera.fov, window_size[0]/window_size[1], 1, 30)
 
     def draw_scene(self, world, camera, canvas):
         """
@@ -84,6 +84,8 @@ class Renderer:
 
         # Project the points to the camera view and then a projection view
         print(view_matrix)
+        print(project_matrix)
+
         print("point:", point)
         #xy = view_matrix * point
         xy = np.dot(point, view_matrix)

@@ -6,21 +6,22 @@ import sys
 
 
 class Scene:
-    def __init__(self, ):
+    def __init__(self, window_size=(1000, 1000)):
         """
         Initializes a new scene.  By default, puts one object in and sets up everything in the correct positions.
         """
         self.world = World()
         self.camera = Camera(init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.5*3.14)
-        self.renderer = Renderer(self.camera)
+        self.window_size = window_size
+        self.renderer = Renderer(self.camera, self.window_size)
         self.running = True
 
-    def begin_scene(self, window_size=(1000, 1000)):
+    def begin_scene(self, ):
         """
         Begins the rendering and user input MVC process.
         """
         thread_lock = threading.Lock()
-        canvas = pygame.display.set_mode(window_size, 0, 32)
+        canvas = pygame.display.set_mode(self.window_size, 0, 32)
         pygame.mouse.set_visible(False)
         pygame.event.set_grab(True)  # Only uncomment this if you're SURE it won't break everything
         render_thread = threading.Thread(target=self.render_cycle, args=(canvas,thread_lock,))
@@ -96,7 +97,7 @@ class Scene:
             mouse_d = [mouse_x-500, 500-mouse_y]
             if is_grabbed:
                 lock.acquire()
-                self.camera.rotate(mouse_d[0], -mouse_d[1], 0, sensitivity=.01)
+                # self.camera.rotate(mouse_d[0], -mouse_d[1], 0, sensitivity=.01)
                 lock.release()
                 pygame.mouse.set_pos(500, 500)
 
