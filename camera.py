@@ -81,11 +81,12 @@ class Renderer:
             point = np.append(point, [1])
 
         # Project the points to the camera view and then a projection view
-
-        # print("point:", point)
+        print(view_matrix)
+        print("point:", point)
+        #xy = view_matrix * point
         xy = np.dot(point, view_matrix)
 
-        # print("xyV:", xy)
+        print("xyV:", xy)
         xy = np.dot(xy, project_matrix)
         print("xyP:", xy)
 
@@ -171,9 +172,6 @@ class Renderer:
         dy = (point1[1] - point0[1]) / (point1[0] - point0[0])
 
 
-
-
-
         if dx > dy:
             # dz depends on x
             dz = (point1[2] - point0[2]) / (point1[0] - point0[0])
@@ -244,11 +242,6 @@ class Renderer:
                          [xaxis[1],                     yaxis[1],                   zaxis[1],                0],
                          [xaxis[2],                     yaxis[2],                   zaxis[2],                0],
                          [-np.dot(xaxis, camera.pos),   -np.dot(yaxis, camera.pos), -np.dot(zaxis, camera.pos), 1]])
-
-        # arr = np.array([[xaxis[0], xaxis[1], xaxis[2], -np.dot(xaxis, camera.pos)],
-        #                 [yaxis[0], yaxis[1], yaxis[2], -np.dot(yaxis, camera.pos)],
-        #                 [zaxis[0], zaxis[1], zaxis[2], -np.dot(zaxis, camera.pos)],
-        #                 [       0,        0,        0,                         1 ]])
 
         return arr
 
