@@ -54,17 +54,22 @@ class Renderer:
         # Draw center point
         self.draw_point(canvas, (canvas.get_width()/2,canvas.get_height()/2, 1), (0, 200, 0), 6)
 
-        # test_lines = (((0,0,1,1),(1,10,10,1)), ((0,0,1,1),(10,10,10,1)))
-        # for line in test_lines:
-        #     self.draw_line(canvas, self.project_point(line[0], view_matrix, project_matrix, canvas), self.project_point(line[1], view_matrix, project_matrix, canvas), (125, 0, 0), 3)
+        test_lines = (((0,1,0,1),(1,0,0,1)),) #, ((0,0,1,1),(10,10,10,1)))
+        for line in test_lines:
+            self.project_line(canvas, line[0], line[1], view_matrix, project_matrix, (125, 0, 0), 3)
 
-        for tri in item.world_points:
-            for point in tri:
-                point_view = np.dot(np.append(point, [1]), view_matrix)
+        # for tri in item.world_points:
+        #     print(tri)
+        #     self.project_line(canvas, tri[0], tri[1], view_matrix, project_matrix, (125, 0, 0), 3)
+        #     self.project_line(canvas, tri[1], tri[2], view_matrix, project_matrix, (125, 0, 0), 3)
 
-                # Cull points behind camera
-                if point_view[2] > 0.01:
-                    self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6, point)
+        # for tri in item.world_points:
+        #     for point in tri:
+        #         point_view = np.dot(np.append(point, [1]), view_matrix)
+        #
+        #         # Cull points behind camera
+        #         if point_view[2] > 0.01:
+        #             self.draw_point(canvas, self.project_point(point, view_matrix, project_matrix, canvas), (125, 0, 0), 6, point)
 
 
         pygame.display.flip()
@@ -127,28 +132,59 @@ class Renderer:
                     canvas.set_at((int(point[0]) + i, canvas.get_height() - int(point[1]) + j), color)
 
 
-    def dist(self, point0, point1):
-        return sqrt((point0[0]-point1[0])**2 + (point0[1] - point1[1])**2)
-
-    def middle(self, point0, point1):
-        return [(point1[0] + (point0[0] - point1[0])/2), (point1[1] + (point0[1] - point1[1])/2), (point1[2] + (point0[2] - point1[2])/2), 1]
-
     def draw_line(self, canvas, point0, point1, color, size=1):
         """
         Draw line between two points.
         """
 
-        dist = self.dist(point0, point1)
+        # Vertical line
+        if int(point0[0]) == int(point1[0]):
+            dz = (point1[2] - point0[2]) / (point1[1] - point0[1])
+            z = point0[2]
+            for y in range(int(point0[1]), int(point1[1])):
+                if z > .01:
+                    self.draw_point(canvas, (int(point0[0]), y, int(z)), color, size)
+                z += dz
+
+        dx = (point1[0] - point0[0]) / (point1[1] - point0[1])
+        dy = (point1[1] - point0[1]) / (point1[0] - point0[0])
 
 
-        if dist < 2:
-            return
+        y = point0[1]
+        z = point0[2]
 
-        middle_point = self.middle(point0, point1)
-        self.draw_point(canvas, middle_point, color, size)
 
-        self.draw_line(canvas, point0, middle_point, color, size)
-        self.draw_line(canvas, middle_point, point1, color, size)
+        if dx > dy:
+            # dz depends on x
+            dz = (point1[2] - point0[2]) / (point1[0] - point0[0])
+
+            for x in range(int(point0[0]), int(point1[0])):
+                print(x, y, z)
+                self.draw_point(canvas, (int(x), int(y), int(z)), color, size)
+                y += dy
+                z += dz
+
+        else:
+            # dz depends on y
+            dz = dz = (point1[2] - point0[2]) / (point1[1] - point0[1])
+
+            for y in range(int(point0[1]), int(point1[1])):
+                print(x, y, z)
+                self.draw_point(canvas, (int(x), int(y), int(z)), color, size)
+                x += dx
+                z += dz
+
+        # dist = self.dist(point0, point1)
+        #
+        #
+        # if dist < 2:
+        #     return
+        #
+        # middle_point = self.middle(point0, point1)
+        # self.draw_point(canvas, middle_point, color, size)
+        #
+        # self.draw_line(canvas, point0, middle_point, color, size)
+        # self.draw_line(canvas, middle_point, point1, color, size)
 
 
 
