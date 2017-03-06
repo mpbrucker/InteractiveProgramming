@@ -57,15 +57,18 @@ class Renderer:
         view_matrix = self.view_matrix(camera)
 
         self.draw_ground(canvas, camera)
-	
+
         # Draw center point
         self.draw_point(canvas, (camera.pos[0], camera.pos[1], .01), (0, 200, 0), 6)
 
         for item in world.get_objects():
             for tri in item.world_points:
-                for point in tri:
-                    transformed_point = self.project_point(point, view_matrix, self.project_matrix, canvas)
-                    self.draw_point(canvas, transformed_point, (125, 0, 0), 6)
+                # print("Tri:", tri)
+                self.project_line(canvas, tri[0], tri[1], view_matrix, self.project_matrix, (125, 0, 0))
+
+                # for point in tri:
+                #     transformed_point = self.project_point(point, view_matrix, self.project_matrix, canvas)
+                #     self.draw_point(canvas, transformed_point, (125, 0, 0), 6)
 
         # test_lines = (((0,1,0,1),(1,0,0,1)),) #, ((0,0,1,1),(10,10,10,1)))
         # for line in test_lines:
@@ -105,6 +108,8 @@ class Renderer:
         if not xy[3] == 0:
             xy = xy/(xy[3])
 
+        # print("xyN:", xy)
+
         return xy
 
     def cull_point(self, point):
@@ -117,7 +122,7 @@ class Renderer:
         point0_c = self.cull_point(point0)
         point1_c = self.cull_point(point1)
 
-        if point0_c and point1_c:
+        if point0_c != None and point1_c != None:
             return point0, point1
 
         # If vertical
@@ -162,7 +167,7 @@ class Renderer:
         point0_p = self.project_point(point0, view_matrix, project_matrix, canvas)
         point1_p = self.project_point(point1, view_matrix, project_matrix, canvas)
 
-        print(point0_p, point1_p)
+        # print(point0_p, point1_p)
 
         point0_cull, point1_cull = self.cull_line(point0_p, point1_p)
 
@@ -178,7 +183,7 @@ class Renderer:
         # print(point)
         if (-1 <= point[0] <= 1) and (-1 <= point[1] <= 1) and (.01 <= point[2] <= 1):
             point_canvas = self.norm_to_canvas_coord(canvas, point)
-            print("Draw:", point_canvas, "Size:", size)
+            # print("Draw:", point_canvas, "Size:", size)
             for i in range(size):
                 for j in range(size):
                     canvas.set_at((int(point_canvas[0]) + i, canvas.get_height() - int(point_canvas[1]) + j), color)
@@ -188,7 +193,7 @@ class Renderer:
         """
         Draw line between two points.
         """
-        print(point0, point1)
+        # print("Draw:", point0, point1)
 
         x = point0[0]
         y = point0[1]
@@ -228,7 +233,7 @@ class Renderer:
             dz = (point1[2] - point0[2]) / (point1[0] - point0[0])
 
             for x in range(int(point0[0]), int(point1[0])):
-                print(x, y, z)
+                #print(x, y, z)
                 self.draw_point(canvas, (int(x), int(y), int(z)), color, size)
                 y += dy
                 z += dz
@@ -238,7 +243,7 @@ class Renderer:
             dz = dz = (point1[2] - point0[2]) / (point1[1] - point0[1])
 
             for y in range(int(point0[1]), int(point1[1])):
-                print(x, y, z)
+                #print(x, y, z)
                 self.draw_point(canvas, (int(x), int(y), int(z)), color, size)
                 x += dx
                 z += dz
@@ -326,9 +331,9 @@ if __name__ == "__main__":
     canvas = pygame.display.set_mode(window_size, 0, 32)
     clock = pygame.time.Clock()
 
-    camera = Camera(init_pos=[0,0,-1], init_angle=[0, 0, 0])
+    camera = Camera(init_pos=[0,0,-10], init_angle=[0, 0, 0])
     renderer = Renderer(camera, window_size=window_size)
-    world = World()
+    world = World([Item('Cylinder.stl', (0, .5, 0), (0, 0, 0), 1)])
 
     while True:
         print(camera)

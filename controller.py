@@ -12,7 +12,7 @@ class Scene:
         """
         self.window_size = window_size
         self.world = World([Item('Cylinder.stl', (0, .5, 0), (0, 0, 0), 1)])
-        self.camera = Camera(init_pos=[0, 1, 0], init_angle=[0, 0, 0], init_fov=.25)
+        self.camera = Camera(init_pos=[0, 0, -10], init_angle=[0, 0, 0], init_fov=.25)
         self.renderer = Renderer(self.camera, window_size)
         self.running = False
 
@@ -96,6 +96,7 @@ class Scene:
                                 pygame.event.set_grab(False)
                                 is_grabbed = False
                                 pygame.mouse.set_visible(True)
+
                         if event.type == pygame.QUIT:
                             self.running = False
                             print("Quitting...")
