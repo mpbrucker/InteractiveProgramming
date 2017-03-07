@@ -50,8 +50,9 @@ class Renderer:
 
     def __init__(self, camera, window_size=(1000,1000)):
         self.project_matrix = self.persp_proj_matrix(camera.fov, window_size[0]/window_size[1], 0.01, 100)
+        self.camera = camera
 
-    def draw_scene(self, world, camera, canvas):
+    def draw_scene(self, world, canvas):
         """
         Draws the frame and updates the display.
         """
@@ -60,9 +61,9 @@ class Renderer:
         background = (255, 255, 255)
         canvas.fill(background)
 
-        view_matrix = self.view_matrix(camera)
+        view_matrix = self.view_matrix()
 
-        self.draw_ground(canvas, camera)
+        self.draw_ground(canvas)
 
 
         for item in world.get_objects():
@@ -75,14 +76,14 @@ class Renderer:
         self.draw_point(canvas, (0,0, .01), (0, 200, 0), 6)
         pygame.display.flip()
 
-    def draw_ground(self, canvas, camera):
+    def draw_ground(self, canvas):
         """
         Draws the ground. A rectangle based on camera angle
         """
 
-        fov = camera.fov
-        cur_angle = (camera.angle[1]+(fov/2))/fov
-        # print(camera.angle)
+        fov = self.camera.fov
+        cur_angle = (self.camera.angle[1]+(fov/2))/fov
+        # print(self.camera.angle)
         if cur_angle < 0:
             cur_angle = 0
         if cur_angle > 1:
@@ -179,7 +180,6 @@ class Renderer:
         point0_can = self.norm_to_canvas_coord(canvas, point0_clip)
         point1_can = self.norm_to_canvas_coord(canvas, point1_clip)
 
-        print(point0_can, point1_can)
         self.draw_line(canvas, point0_can, point1_can, (125, 0, 0), 1)
 
     def norm_to_canvas_coord(self, canvas, point_p):
@@ -295,18 +295,17 @@ class Renderer:
         # Maps w to proper z value
         e = -(znear * zfar) / (zfar - znear)
 
-
         return np.array([[a, 0, 0, 0],
                          [0, b, 0, 0],
                          [0, 0, c, d],
                          [0, 0, e, 0]])
 
 
-    def view_matrix(self, camera):
-        sinYaw = sin(camera.angle[0])
-        cosYaw = cos(camera.angle[0])
-        sinPitch = sin(camera.angle[1])
-        cosPitch = cos(camera.angle[1])
+    def view_matrix(self):
+        sinYaw = sin(self.camera.angle[0])
+        cosYaw = cos(self.camera.angle[0])
+        sinPitch = sin(self.camera.angle[1])
+        cosPitch = cos(self.camera.angle[1])
 
         # Modifies the axis vectors to point in the direction of the camera
         xaxis = (cosYaw, 0, -sinYaw)
@@ -316,7 +315,7 @@ class Renderer:
         arr =  np.array([[xaxis[0],                     yaxis[0],                   zaxis[0],                0],
                          [xaxis[1],                     yaxis[1],                   zaxis[1],                0],
                          [xaxis[2],                     yaxis[2],                   zaxis[2],                0],
-                         [-np.dot(xaxis, camera.pos),   -np.dot(yaxis, camera.pos), -np.dot(zaxis, camera.pos), 1]])
+                         [-np.dot(xaxis, self.camera.pos),   -np.dot(yaxis, self.camera.pos), -np.dot(zaxis, self.camera.pos), 1]])
 
         return arr
 
@@ -336,7 +335,7 @@ if __name__ == "__main__":
 
     while True:
         print(camera)
-        renderer.draw_scene(world, camera, canvas)
+        renderer.draw_scene(world, canvas)
 
         # camera.pos[0] = camera.pos[0] + 5
         # camera.pos[1] = camera.pos[1] + 5

@@ -40,7 +40,7 @@ class Scene:
         # try:
         while self.running:
             lock.acquire()  # Acquire lock, otherwise things get weird
-            self.renderer.draw_scene(self.world, self.camera, canvas)
+            self.renderer.draw_scene(self.world, canvas)
             lock.release()
             clock.tick(60)  # FPS
             # print(self.camera.angle)
