@@ -23,7 +23,7 @@ class Renderer:
 
     def __init__(self, camera, window_size=(1000,1000)):
         self.camera = camera
-        self.project_matrix = self.persp_proj_matrix(self.camera.fov, window_size[0]/window_size[1], 0.01, 100)
+        self.project_matrix = self.persp_proj_matrix(self.camera.fov, window_size[0]/window_size[1], 1, 300)
 
     def draw_scene(self, world, canvas):
         """

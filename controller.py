@@ -1,3 +1,9 @@
+"""
+The main controller for our world. Initializes the world, camera, and renderer, and
+takes user input in order to control the camera's position in the world.
+"""
+
+
 from world import World
 from camera import Camera
 from renderer import Renderer
@@ -14,17 +20,18 @@ class Scene:
         """
         self.window_size = window_size
         self.world = World()
-        self.world.gen_random_scene(1,3)
-        self.world.add_item(Item('cube.stl', (0, .5, .5), (0, 0, 0), 1, color=(255, 255, 0)))
+        self.world.gen_random_scene(1, 1)
+        # self.world.add_item([Item('teapot.stl', (0, 0, 0), (0, 0, 0), 1, color=(255, 255, 0))])
+        # self.world.add_item([Item('cube.stl', (50, 10, 10), (0, 0, 0), 1, color=(255, 255, 0))])
         self.camera = Camera(init_pos=[0, 1, -10], init_angle=[0, 0, 0], init_fov=1.57)
         self.renderer = Renderer(self.camera, window_size)
         self.running = False
 
     def begin_scene(self):
         """
-        Begins the rendering and user input MVC process.
+        Begins the rendering and user input MVC loop.
         """
-        thread_lock = threading.Lock()
+        thread_lock = threading.Lock()  # lock needed to ensure threading is happy
         canvas = pygame.display.set_mode(self.window_size, 0, 32)
         pygame.mouse.set_visible(False)
         # pygame.event.set_grab(True)  # Only uncomment this if you're SURE it won't break everything
@@ -41,17 +48,19 @@ class Scene:
         pygame.init()
         clock = pygame.time.Clock()
         self.running = True
-        # try:
-        while self.running:
-            lock.acquire()  # Acquire lock, otherwise things get weird
-            self.renderer.draw_scene(self.world, canvas)
-            lock.release()
-            clock.tick(60)  # FPS
-            # print(self.camera.angle)
+        try:
+            while self.running:
+                lock.acquire()  # Acquire lock, otherwise things get weird
+                self.renderer.draw_scene(self.world, canvas)
+                lock.release()
+                clock.tick(60)  # FPS
+        except Exception as e:  # Avoid input grabbing issues by quitting on exception
+            print(str(e))
+            sys.exit()
 
     def handle_user_input(self, lock):
         """
-        Gets the input from the user.
+        Continually grabs input from the user, and performs movement/rotation. Also handles input grabbing/release.
         """
         event_keys = (pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a)
         keys_pressed = [0, 0, 0, 0]  # The pressed status of the keys
@@ -63,7 +72,7 @@ class Scene:
             if self.running:
                 try:  # Exception handling so that we can let go of inputs if need be
 
-                    # Gets input from keyboard/mouse, and updates camera based on it
+                    # Gets updated input from movement keys
                     events = pygame.event.get()
                     down_keys = [event.key for event in events if event.type == pygame.KEYDOWN]
                     up_keys = [event.key for event in events if event.type == pygame.KEYUP]
@@ -105,10 +114,9 @@ class Scene:
                             self.running = False
                             print("Quitting...")
                             break
-
                 except Exception as e:
-                    pygame.event.set_grab(False)
                     print(str(e))
+                    sys.exit()
 
         # On quit, gracefully exit
         pygame.quit()
@@ -122,7 +130,7 @@ class Scene:
         self.camera.rotate(mouse_d[0], -mouse_d[1], 0, sensitivity=.001)
         self.camera.move((keys[2]-keys[3], 0, keys[0]-keys[1]), speed=0.001)
         lock.release()
-        pygame.mouse.set_pos(500, 500)
+        pygame.mouse.set_pos(500, 500)  # Reset mouse position
 
 
 if __name__ == "__main__":
