@@ -26,7 +26,8 @@ class World:
         """
         Places objects into the world. Number of objects generated is between min_val and max_val.
         """
-        objects = ['teapot.stl']
+        objects = ['cube.stl', 'teapot.stl']
         num_obj = randint(min_val, max_val)
         for x in range(num_obj):
-            self.add_item(Item(choice(objects), (randint(30,50), randint(30,50), randint(30,50)), (-90,0,0), 1, color=(randint(0,255), randint(0,255), randint(0,255))))
+            self.add_item(Item(choice(objects), (randint(50, 150), randint(50, 150), randint(60, 150)),
+                               (randint(-90, 90), randint(-90, 90), randint(-90, 90)), uniform(0.5, 10), color=(randint(0, 255), randint(0, 255), randint(0, 255))))
