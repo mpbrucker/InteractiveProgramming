@@ -23,6 +23,9 @@ class World:
         return self.items
 
     def gen_random_scene(self, min_val, max_val):
+        """
+        Places objects into the world. Number of objects generated is between min_val and max_val.
+        """
         objects = ['cube.stl']
         for x in range(min_val, max_val):
             self.add_item(Item(choice(objects), (randint(10,50), randint(10,50), randint(10,50)), (0,0,0), uniform(0.5, 5), color=(randint(0,255), randint(0,255), randint(0,255))))
