@@ -180,7 +180,7 @@ class Renderer:
         Draw a point given projected coordinates.
         """
 
-        if clip_point(point_p) is not None:
+        if self.clip_point(point_p) is not None:
             point_can = self.norm_to_canvas_coord(canvas, point_p)
             canvas.set_at((int(point_can[0]), canvas.get_height() - int(point_can[1])), color)
 
