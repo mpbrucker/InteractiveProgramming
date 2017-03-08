@@ -241,37 +241,24 @@ class Renderer:
         dx = (point1_can[0] - point0_can[0]) / (point1_can[1] - point0_can[1])
         dy = (point1_can[1] - point0_can[1]) / (point1_can[0] - point0_can[0])
 
-
-        if dx < dy:
+        # Slope between Pi/4 and -Pi/4
+        if abs(dx) > abs(dy):
             # dz depends on x
             dz = (point1_can[2] - point0_can[2]) / (point1_can[0] - point0_can[0])
 
             for x in range(int(point0_can[0]), int(point1_can[0])):
-                #print(x, y, z)
-                y_draw = y
-                if dy > 1:
-                    while y_draw-y < int(dy) and y_draw < point1_can[1]:
-                        self.draw_point_canvas(canvas, (int(x), int(y_draw), int(z)), color, size)
-                        y_draw += 1
-                else:
-                    self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color, size)
+                self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color, size)
 
                 y += dy
                 z += dz
 
+        # Slope more up or down
         else:
             # dz depends on y
             dz = (point1_can[2] - point0_can[2]) / (point1_can[1] - point0_can[1])
 
             for y in range(int(point0_can[1]), int(point1_can[1])):
-                #print(x, y, z)
-                x_draw = x
-                if dx > 1:
-                    while x_draw-x < int(dx) and x_draw < point1_can[0]:
-                        self.draw_point_canvas(canvas, (int(x_draw), int(y), int(z)), color, size)
-                        x_draw += 1
-                else:
-                        self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color, size)
+                self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color, size)
                 x += dx
                 z += dz
 
