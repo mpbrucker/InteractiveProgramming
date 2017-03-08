@@ -20,7 +20,7 @@ class Scene:
         """
         self.window_size = window_size
         self.world = World()
-        self.world.gen_random_scene(1, 1)
+        self.world.gen_random_scene(1, 3)
         # self.world.add_item([Item('teapot.stl', (0, 0, 0), (0, 0, 0), 1, color=(255, 255, 0))])
         # self.world.add_item([Item('cube.stl', (50, 10, 10), (0, 0, 0), 1, color=(255, 255, 0))])
         self.camera = Camera(init_pos=[0, 1, -10], init_angle=[0, 0, 0], init_fov=1.57)
