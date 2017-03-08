@@ -8,7 +8,6 @@ from math import sin, cos, pi
 
 
 class Camera:
-
     def __init__(self, init_pos=[0, 0, 0], init_angle=[0, 0, 0], init_fov=.5*pi):
         """
         Initializes a new Camera object with init_pos, init_angle, init_fov
