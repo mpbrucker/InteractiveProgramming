@@ -19,11 +19,29 @@ class Item():
 
         # Get the rotation matrix using the rotations about the x, y, and z axes
         self.world_points = self.get_transformed_points(self.vecs, world_coords, orientation, scale)
+        self.lines = self.get_object_lines()
         self.color = color  # Set the color of the object
         self.location = world_coords  # The canonical location of the object
 
     def __str__(self):
         return "Position in world: ({}, {}, {})".format(self.location[0], self.location[1], self.location[2])
+
+    def get_object_lines(self):
+        all_lines = []
+        # print(len(self.world_points))
+        for tri in self.world_points:
+            for idx, vert in enumerate(tri):
+                line = [vert]
+                line.append(tri[(idx+1) % 3])
+                all_lines.append(line)
+
+        seen = set()
+        uniq = []
+        for x in all_lines:
+            if str(x[::-1]) not in seen:
+                uniq.append(x)
+            seen.add(str(x))
+        return uniq
 
     def model_to_points(self, file_name):
         """

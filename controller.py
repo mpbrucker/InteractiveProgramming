@@ -1,4 +1,6 @@
-from camera import World, Camera, Renderer
+from world import World
+from camera import Camera
+from renderer import Renderer
 from item import Item
 import pygame
 import threading
@@ -11,8 +13,10 @@ class Scene:
         Initializes a new scene.  By default, puts one object in and sets up everything in the correct positions.
         """
         self.window_size = window_size
-        self.world = World([Item('Cylinder.stl', (0, .5, 0), (0, 0, 0), 1)])
-        self.camera = Camera(init_pos=[0, 0, -3], init_angle=[0, 0, 0], init_fov=.5 * 3.1)
+        self.world = World()
+        self.world.gen_random_scene(1,2)
+        self.world.add_item([Item('cube.stl', (0, .5, .5), (0, 0, 0), 1, color=(255, 255, 0))])
+        self.camera = Camera(init_pos=[0, 1, -10], init_angle=[0, 0, 0], init_fov=1.57)
         self.renderer = Renderer(self.camera, window_size)
         self.running = False
 
@@ -40,7 +44,7 @@ class Scene:
         # try:
         while self.running:
             lock.acquire()  # Acquire lock, otherwise things get weird
-            self.renderer.draw_scene(self.world, self.camera, canvas)
+            self.renderer.draw_scene(self.world, canvas)
             lock.release()
             clock.tick(60)  # FPS
             # print(self.camera.angle)
@@ -116,7 +120,7 @@ class Scene:
         """
         lock.acquire()  # Acquire lock to make sure multithreading things don't get messed up
         self.camera.rotate(mouse_d[0], -mouse_d[1], 0, sensitivity=.001)
-        self.camera.move((keys[2]-keys[3], 0, keys[0]-keys[1]), speed=0.0001)
+        self.camera.move((keys[2]-keys[3], 0, keys[0]-keys[1]), speed=0.001)
         lock.release()
         pygame.mouse.set_pos(500, 500)
 
