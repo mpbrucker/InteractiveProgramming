@@ -44,7 +44,7 @@ class Renderer:
                 self.project_line(canvas, line[0], line[1], view_matrix, self.project_matrix, item.color)
 
         # Draw center point
-        self.draw_point(canvas, (0,0, .01), (0, 200, 0), 6)
+        self.draw_point(canvas, (0,0, .01), (0, 200, 0))
         pygame.display.flip()
 
 
@@ -146,7 +146,7 @@ class Renderer:
         return point0_p, point1_p
 
 
-    def project_line(self, canvas, point0_w, point1_w, view_matrix, project_matrix, color, size=1):
+    def project_line(self, canvas, point0_w, point1_w, view_matrix, project_matrix, color):
         """
         Projects and draws a line given world coordinates.
         """
@@ -168,29 +168,21 @@ class Renderer:
         point0_can = self.norm_to_canvas_coord(canvas, point0_clip)
         point1_can = self.norm_to_canvas_coord(canvas, point1_clip)
 
-        self.draw_line(canvas, point0_can, point1_can, color, 1)
+        self.draw_line(canvas, point0_can, point1_can, color)
 
 
     def norm_to_canvas_coord(self, canvas, point_p):
         return((point_p[0] * canvas.get_width()) + canvas.get_width()/2, (point_p[1] * canvas.get_height()) + canvas.get_height()/2, point_p[2])
 
 
-    def draw_point(self, canvas, point_p, color, size=1):
+    def draw_point(self, canvas, point_p, color):
         """
         Draw a point given projected coordinates.
         """
 
-        if (-1 <= point_p[0] <= 1) and (-1 <= point_p[1] <= 1) and (.01 <= point_p[2] <= 1):
+        if clip_point(point_p) is not None:
             point_can = self.norm_to_canvas_coord(canvas, point_p)
-
-            if size == 1:
-                canvas.set_at((int(point_can[0]), canvas.get_height() - int(point_can[1])), color)
-
-            else:
-                # TODO center point
-                for i in range(size):
-                    for j in range(size):
-                        canvas.set_at((int(point_can[0]) + i, canvas.get_height() - int(point_can[1]) + j), color)
+            canvas.set_at((int(point_can[0]), canvas.get_height() - int(point_can[1])), color)
 
 
     def draw_point_canvas(self, canvas, point_can, color, size=1):
@@ -203,9 +195,9 @@ class Renderer:
                 canvas.set_at((int(point_can[0]) + i, canvas.get_height() - int(point_can[1]) + j), color)
 
 
-    def draw_line(self, canvas, point0_can, point1_can, color, size=1):
+    def draw_line(self, canvas, point0_can, point1_can, color):
         """
-        Draw line between two points.
+        Draw line between two points, given in canvas coordinates.
         """
 
         if point0_can is None or point1_can is None:
@@ -218,7 +210,7 @@ class Renderer:
         # Single Point
         if int(point0_can[0]) == int(point1_can[0]) and int(point0_can[1]) == int(point1_can[1]):
             # print("Single point at {} {} {}".format(x, y, z))
-            self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color, 1)
+            self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color)
             return
 
         # Vertical line
@@ -228,7 +220,7 @@ class Renderer:
 
             for y in range(int(point0_can[1]), int(point1_can[1])):
                 if z > .01:
-                    self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color, size)
+                    self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color)
                 z += dz
             return
 
@@ -239,7 +231,7 @@ class Renderer:
 
             for x in range(int(point0_can[0]), int(point1_can[0])):
                 if z > .01:
-                    self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color, size)
+                    self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color)
                 z += dz
             return
 
@@ -252,7 +244,7 @@ class Renderer:
             dz = (point1_can[2] - point0_can[2]) / (point1_can[0] - point0_can[0])
 
             for x in range(int(point0_can[0]), int(point1_can[0])):
-                self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color, size)
+                self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color)
 
                 y += dy
                 z += dz
@@ -263,7 +255,7 @@ class Renderer:
             dz = (point1_can[2] - point0_can[2]) / (point1_can[1] - point0_can[1])
 
             for y in range(int(point0_can[1]), int(point1_can[1])):
-                self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color, size)
+                self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color)
                 x += dx
                 z += dz
 
