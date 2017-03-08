@@ -30,7 +30,7 @@ class Renderer:
         Draws the frame and updates the display.
         """
 
-        # Reset to white
+        # Reset canvas to white
         background = (255, 255, 255)
         canvas.fill(background)
 
@@ -38,26 +38,11 @@ class Renderer:
 
         self.draw_ground(canvas)
 
-
+        # Draw all lines in the world
         for item in world.items:
             for line in item.lines:
                 self.project_line(canvas, line[0], line[1], view_matrix, self.project_matrix, item.color)
 
-
-            # for tri in item.world_points:
-            #     # print("Tri:", tri)
-            #     print(tri[0])
-            #     self.project_line(canvas, tri[0], tri[1], view_matrix, self.project_matrix, (125, 0, 0))
-            #     self.project_line(canvas, tri[1], tri[2], view_matrix, self.project_matrix, (125, 0, 0))
-            #     self.project_line(canvas, tri[2], tri[0], view_matrix, self.project_matrix, (125, 0, 0))
-
-                # for point in tri:
-                #     transformed_point = self.project_point(point, view_matrix, self.project_matrix, canvas)
-                #     self.draw_point(canvas, transformed_point, (125, 0, 0), 6)
-
-        # test_lines = (((0,1,0,1),(1,0,0,1)),) #, ((0,0,1,1),(10,10,10,1)))
-        # for line in test_lines:
-        #     self.project_line(canvas, line[0], line[1], view_matrix, self.project_matrix, (125, 0, 0), 3)
         # Draw center point
         self.draw_point(canvas, (0,0, .01), (0, 200, 0), 6)
         pygame.display.flip()
@@ -81,7 +66,7 @@ class Renderer:
 
     def project_point(self, point_w, view_matrix, project_matrix, canvas):
         """
-        Projects a point from world coordinates to the projected coordinates.
+        Projects a point from world coordinates to projected coordinates.
         """
 
         # R3 points need an w value for perspective. Turn an [x, y, z] to [x, y, z, 1]
@@ -97,6 +82,8 @@ class Renderer:
             point_p = point_p/(point_p[3])
 
         return point_p
+
+
     def clip_point(self, point_p):
         """
         Clips a point to the inside of the projection box.
@@ -107,10 +94,13 @@ class Renderer:
         else:
             return None
 
+
     def clip_line(self, point0_p, point1_p):
         """
         Clips a line to the inside of the projection box.
-        Note: incomplete
+        Note: Intersections are incomplete, resulting in lines with one or both
+        points off the canvas being displayed wrong. (Especially if one is
+        behind the camera)
         """
 
         point0_clip = self.clip_point(point0_p)
@@ -124,9 +114,19 @@ class Renderer:
         if point0_p[0] == point1_p[0]:
             if -1 < point0_p[0] < 1:
                 if point0_clip is None:
-                    point0_p[2] = sign(point0_p[2])
+                    point0_p[1] = sign(point0_p[1])
+                if point1_clip is None:
+                    point1_p[1] = sign(point1_p[1])
                 return point0_p, point1_p
 
+        # If line is Horizontal
+        if point0_p[1] == point1_p[1]:
+            if -1 < point0_p[1] < 1:
+                if point0_clip is None:
+                    point0_p[0] = sign(point0_p[0])
+                if point1_clip is None:
+                    point1_p[0] = sign(point1_p[0])
+                return point0_p, point1_p
 
         # Make point 0 leftmost
         if point0_p[0] > point1_p[0]:
@@ -144,6 +144,7 @@ class Renderer:
             point0_p = (-1, line(-1), point0_p[2])
 
         return point0_p, point1_p
+
 
     def project_line(self, canvas, point0_w, point1_w, view_matrix, project_matrix, color, size=1):
         """
@@ -169,8 +170,10 @@ class Renderer:
 
         self.draw_line(canvas, point0_can, point1_can, color, 1)
 
+
     def norm_to_canvas_coord(self, canvas, point_p):
         return((point_p[0] * canvas.get_width()) + canvas.get_width()/2, (point_p[1] * canvas.get_height()) + canvas.get_height()/2, point_p[2])
+
 
     def draw_point(self, canvas, point_p, color, size=1):
         """
@@ -188,6 +191,7 @@ class Renderer:
                 for i in range(size):
                     for j in range(size):
                         canvas.set_at((int(point_can[0]) + i, canvas.get_height() - int(point_can[1]) + j), color)
+
 
     def draw_point_canvas(self, canvas, point_can, color, size=1):
         """
@@ -211,6 +215,7 @@ class Renderer:
         y = point0_can[1]
         z = point0_can[2]
 
+        # Single Point
         if int(point0_can[0]) == int(point1_can[0]) and int(point0_can[1]) == int(point1_can[1]):
             # print("Single point at {} {} {}".format(x, y, z))
             self.draw_point_canvas(canvas, (int(x), int(y), int(z)), color, 1)
@@ -265,9 +270,9 @@ class Renderer:
 
     def persp_proj_matrix(self, fov, aspect, znear, zfar):
         """
-        Return a projection matrix for the given parameters
+        Returns a perspective projection matrix from the given parameters.
+        This is a rectangular frustum, which remaps world coordinates into a cube between -1 and 1
         """
-
         # Scale of x axis
         a = aspect * (1 / tan(fov * .5))
 
@@ -277,9 +282,10 @@ class Renderer:
         # Remaps z to [0,1], for z-index
         c = zfar / (zfar - znear)
 
+        # Sets w to z
         d = 1
 
-        # Maps w to proper z value
+        # Moves z up to fit in znear
         e = -(znear * zfar) / (zfar - znear)
 
         return np.array([[a, 0, 0, 0],
@@ -289,48 +295,24 @@ class Renderer:
 
 
     def view_matrix(self):
+        """
+        Returns a view matrix.
+        Transforms view coordinates to make the camera located at (0,0,0) and pointed in the positive z direction.
+        """
         sinYaw = sin(self.camera.angle[0])
         cosYaw = cos(self.camera.angle[0])
         sinPitch = sin(self.camera.angle[1])
         cosPitch = cos(self.camera.angle[1])
 
-        # Modifies the axis vectors to point in the direction of the camera
+        # The axis vectors to point in the direction of the camera
         xaxis = (cosYaw, 0, -sinYaw)
         yaxis = (sinYaw * sinPitch, cosPitch, cosYaw * sinPitch)
         zaxis = (sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw)
 
+        # First 3 rows do rotation, the 4th row (which gets multiplied by 1) does translation
         arr =  np.array([[xaxis[0],                     yaxis[0],                   zaxis[0],                0],
                          [xaxis[1],                     yaxis[1],                   zaxis[1],                0],
                          [xaxis[2],                     yaxis[2],                   zaxis[2],                0],
                          [-np.dot(xaxis, self.camera.pos),   -np.dot(yaxis, self.camera.pos), -np.dot(zaxis, self.camera.pos), 1]])
 
         return arr
-
-
-
-
-if __name__ == "__main__":
-    window_size = (1000, 1000)
-    background = (255, 255, 255)
-
-    pygame.init()
-    canvas = pygame.display.set_mode(window_size, 0, 32)
-    clock = pygame.time.Clock()
-
-    camera = Camera(init_pos=[0,0,-10], init_angle=[0, 0, 0])
-    renderer = Renderer(camera, window_size=window_size)
-    world = World([Item('Cylinder.stl', (0, .5, 0), (0, 0, 0), 1)])
-
-    while True:
-        print(camera)
-        renderer.draw_scene(world, canvas)
-
-        # camera.pos[0] = camera.pos[0] + 5
-        # camera.pos[1] = camera.pos[1] + 5
-        camera.pos[2] = camera.pos[2] + .005
-        # camera.fov = camera.fov + 1
-        # camera.angle[0] = camera.angle[0] + .4
-
-
-        # print()
-        clock.tick(30)
