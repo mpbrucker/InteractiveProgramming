@@ -20,7 +20,7 @@ class Scene:
         """
         self.window_size = window_size
         self.world = World()
-        self.world.gen_random_scene(1, 2)
+        self.world.gen_random_scene(1, 1)
         # self.world.add_item([Item('teapot.stl', (0, 0, 0), (0, 0, 0), 1, color=(255, 255, 0))])
         # self.world.add_item([Item('cube.stl', (50, 10, 10), (0, 0, 0), 1, color=(255, 255, 0))])
         self.camera = Camera(init_pos=[0, 1, -10], init_angle=[0, 0, 0], init_fov=1.57)
@@ -34,7 +34,7 @@ class Scene:
         thread_lock = threading.Lock()  # lock needed to ensure threading is happy
         canvas = pygame.display.set_mode(self.window_size, 0, 32)
         pygame.mouse.set_visible(False)
-        pygame.event.set_grab(True)  # Only uncomment this if you're SURE it won't break everything
+        # pygame.event.set_grab(True)  # Only uncomment this if you're SURE it won't break everything
         render_thread = threading.Thread(target=self.render_cycle, args=(canvas, thread_lock,))
         render_thread.start()
 

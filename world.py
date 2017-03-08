@@ -24,5 +24,6 @@ class World:
 
     def gen_random_scene(self, min_val, max_val):
         objects = ['teapot.stl']
-        for x in range(min_val, max_val):
-            self.add_item(Item(choice(objects), (randint(10,50), randint(10,50), randint(10,50)), (0,0,0), 1, color=(randint(0,255), randint(0,255), randint(0,255))))
+        num_obj = randint(min_val, max_val)
+        for x in range(num_obj):
+            self.add_item(Item(choice(objects), (randint(30,50), randint(30,50), randint(30,50)), (-90,0,0), 1, color=(randint(0,255), randint(0,255), randint(0,255))))
