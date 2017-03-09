@@ -3,8 +3,7 @@
 ##### Adam Novotny, Matt Brucker
 
 ### Project Overview
-The goal of this project was to create an interactive 3D environment from scratch
-. Over the course of this project, we implemented the basics of a 3D rendering engine in Python, by learning the matrix math required to convert 3D objects into points and space and points in space to points on the screen; used that to create a 3D environment that could be displayed; and added in the ability to move and look around within the environment. We also used a very simple random world generation to add some variety.
+The goal of this project was to create an interactive 3D environment from scratch. Over the course of this project, we implemented a basic 3D rendering engine in Python, by learning the matrix math required to convert 3D objects into points in space and points in space to points on the screen; used that to create a 3D environment that could be displayed; and added in the ability to move and look around within the environment. We also used a very simple random world generation to add some variety.
 
 ### Results
 **Graphics**
@@ -18,7 +17,7 @@ We were able to get our project to the point of simple landscape generation. Eve
 ![A sample landscape generated.](objects.png)
 
 **Performance**
-In terms of computational performance, our program runs fairly slowly. Very simple objects such as boxes, with only a few lines and vertices, can be rendered very quickly, generally over 60 FPS. However, as the number of objects, and the complexity of the objects, increases, the graphics engine slows down considerably. Additionally, the closer the user gets to objects, the longer it takes to render the individual objects.
+In terms of computational performance, our program runs fairly slowly. This is because it is CPU bound, and drawing is done through pygame. Very simple objects such as boxes, with only a few lines and vertices, can be rendered very quickly, generally over 60 FPS. However, as the number of objects, and the complexity of the objects, increases, the graphics engine slows down considerably. Additionally, the closer the user gets to objects, the longer it takes to render the individual objects.
 
 ### Implementation
 We implemented our engine using five classes, as shown below.
@@ -29,11 +28,21 @@ At the lowest level, the Item class represents a single object in the world. It 
 
 In order to convert the vertices and edges of the objects into projections onto the 2D view of the user, a Camera object is needed. The Camera object occupies a point in world space, with an initial position, orientation, and FOV that can be set in the constructor; it can also be moved and rotated.
 
-The Renderer class takes the World and Camera and uses their positions/orientations to create the actual projection that appears on-screen. When draw_scene() is called, it loops through each Item in World and projects its points. To do this, it first transforms each point into "view space," a shifted coordinate system with the origin at the point of the camera and the +z axis pointing in the direction of the camera view, by operating on each point with a view transformation matrix. Then, a projection matrix transforms each point into projection space, where the x and y values of the point represent the actual pixel position it occupies on-screen. Finally, points that are out of the camera view are culled, and lines are drawn on the frame before it's displayed.
+The Renderer class takes the World and Camera and uses their positions/orientations to create the actual projection that appears on-screen. When draw_scene() is called, it loops through each Item in World and projects its points. To do this, it first transforms each point into "view space," a shifted coordinate system with the origin at the point of the camera and the +z axis pointing in the direction of the camera view, by operating on each point with a view transformation matrix. Then, a projection matrix transforms each point into projection space, where the x and y values of the point represent the actual pixel position it occupies on-screen. Finally, points that are out of the camera view are clipped, and lines are drawn on the frame before it's displayed.
 
 In order to turn all of this into a functional program, the Controller class is used. It creates new World, Camera, and Renderer objects, and updates each of them accordingly. It uses multithreading to avoid as much lag between input and rendering as possible; one thread continually loops and calls draw_scene() on the Renderer object, and the other takes in mouse/keyboard input using pygame and updates the position/orientation of the Camera object accordingly. Together, these five classes allow the environment to be displayed and updated with inputs from the user.
+
+### Future Steps
+
+There are many improvements we could have added with time and effort:
+* Optimization: Port to OpenGL for actual real-time rendering
+* Proper clipping: Some lines are not clipped properly and draw very wonkily (would also fix the slowdown when an object is behind the camera)
+* Filling the triangles
 
 ### Reflection
 
 **Matt**
 Overall, I think the process we used to develop our project worked well. We definitely knew what tasks we needed to complete from the beginning, because the original class diagram we laid out at the start is essentially how we ended up structuring our program. I'd say that the division of labor was fairly effective as well; we didn't have a formal process of handling it, but we each tackled things as they came up. I ended up doing more of the user input/controller tasks while Adam did more of the math behind rendering, but I think we each got a decent amount of exposure to every aspect of the project. The one thing I think we could have done more effectively was project scoping; we definitely went in to the project thinking we would be able to accomplish more than we could. Even though we did end up with a fully working product, we didn't end up adding many of the things we were hoping to; I think we would have benefited from being more realistic about what we could accomplish. Still, I'm very happy with the end product.
+
+**Adam**
+I am extremely satisfied with what I had learned from this project. Learning how modern rendering engines work, and implementing many of those techniques has been quite an experience. The hardest thing for me to grasp was how the projection matrix actually created a projection inside a cube between -1 and 1. We refactored the code a few times, ending on a fairly clean code base that I am comfortable adding features to. I am also pretty happy with the actual project, which is a proper 3d renderer that does the basic things a 3d renderer needs. I spent most of my time understanding and implementing the transform matrices and drawing methods. Our final product is almost exactly the outcome I had realistically expected, with plenty of extra plans in case it was much easier than we had thought.
